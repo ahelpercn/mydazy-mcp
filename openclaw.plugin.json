@@ -1,0 +1,85 @@
+{
+  "id": "mydazy-mcp",
+  "uiHints": {
+    "mcpServerUrl": {
+      "label": "MCP Relay URL",
+      "help": "Xiaozhi hosted MCP WebSocket, e.g. wss://api.xiaozhi.me/mcp/?token=...",
+      "sensitive": true
+    },
+    "pushttsUrl": {
+      "label": "PushTTS Webhook URL",
+      "help": "mydazy push endpoint, e.g. http://www.mydazy.com/ota/pushtts?token=...",
+      "sensitive": true
+    },
+    "defaultAgent": {
+      "label": "Default Agent",
+      "help": "OpenClaw agent ID that handles tasks without an explicit agent param."
+    },
+    "devices[].id": {
+      "label": "Device ID"
+    },
+    "devices[].webhookUrl": {
+      "label": "Device Webhook URL (legacy)",
+      "help": "Per-device push URL. Leave empty to use the global pushttsUrl."
+    },
+    "devices[].triggerWord": {
+      "label": "Trigger Word (≤10 chars)",
+      "help": "Word TTS-spoken on device when results are ready, e.g. 小龙虾有结果了"
+    },
+    "taskTimeoutMs": {
+      "label": "Task Timeout (ms)",
+      "advanced": true
+    },
+    "maxQueueSize": {
+      "label": "Max Queue Size per Device",
+      "advanced": true
+    },
+    "reconnectDelayMs": {
+      "label": "WS Reconnect Delay (ms)",
+      "advanced": true
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["mcpServerUrl", "pushttsUrl"],
+    "properties": {
+      "mcpServerUrl": {
+        "type": "string"
+      },
+      "pushttsUrl": {
+        "type": "string"
+      },
+      "defaultAgent": {
+        "type": "string"
+      },
+      "devices": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "webhookUrl"],
+          "properties": {
+            "id": { "type": "string" },
+            "webhookUrl": { "type": "string" },
+            "triggerWord": { "type": "string" },
+            "enabled": { "type": "boolean" }
+          }
+        }
+      },
+      "maxQueueSize": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 200
+      },
+      "taskTimeoutMs": {
+        "type": "integer",
+        "minimum": 5000
+      },
+      "reconnectDelayMs": {
+        "type": "integer",
+        "minimum": 500
+      }
+    }
+  }
+}
