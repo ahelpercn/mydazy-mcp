@@ -3,7 +3,6 @@ import type {
   OpenClawPluginApi,
 } from "openclaw/plugin-sdk/mydazy-mcp";
 import { MydazyMcpConfigSchema, mydazyMcpConfigSchema } from "./src/config.js";
-import type { CoreConfig } from "./src/core-bridge.js";
 import { McpClient } from "./src/mcp-client.js";
 import { buildOralSummary, isInlineable } from "./src/result-narrator.js";
 import { pushWebhook } from "./src/webhook-pusher.js";
@@ -21,7 +20,6 @@ const mydazyMcpPlugin = {
 
   register(api: OpenClawPluginApi) {
     const config = mydazyMcpConfigSchema.parse(api.pluginConfig);
-    const coreConfig = api.config as CoreConfig;
 
     // Parse once to validate; will throw early if required fields are missing
     MydazyMcpConfigSchema.parse(config);
@@ -30,7 +28,7 @@ const mydazyMcpPlugin = {
 
     const ensureRuntime = (): MydazyRuntime => {
       if (runtime) return runtime;
-      const client = new McpClient(config, coreConfig, api.logger);
+      const client = new McpClient(config, api.logger);
       runtime = { client };
       return runtime;
     };

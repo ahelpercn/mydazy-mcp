@@ -17,7 +17,6 @@
 
 import { WebSocket } from "ws";
 import type { MydazyMcpConfig } from "./config.js";
-import type { CoreConfig } from "./core-bridge.js";
 import { buildOralSummary } from "./result-narrator.js";
 import { TaskQueue } from "./task-queue.js";
 import { runTask } from "./task-runner.js";
@@ -127,7 +126,6 @@ export class McpClient {
 
   constructor(
     private readonly config: MydazyMcpConfig,
-    private readonly coreConfig: CoreConfig,
     private readonly logger: Logger,
   ) {
     this.queue = new TaskQueue(config);
@@ -388,7 +386,6 @@ export class McpClient {
       agent,
       prompt,
       timeoutMs: this.config.taskTimeoutMs,
-      coreConfig: this.coreConfig,
       queue: this.queue,
       pushttsUrl: this.config.pushttsUrl,
       triggerWord,
