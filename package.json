@@ -19,6 +19,16 @@
   },
   "type": "module",
   "main": "./index.ts",
+  "files": [
+    "index.ts",
+    "src/",
+    "openclaw.plugin.json",
+    "install.sh",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "dependencies": {
     "ws": "^8.19.0",
     "zod": "^4.3.6"
