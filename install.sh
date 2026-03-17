@@ -1,14 +1,14 @@
 #!/bin/bash
 set -e
 
-# openclaw-mydazy-mcp 一键安装脚本
+# mydazy-mcp 一键安装脚本
 # 用法: bash install.sh
 
 PLUGIN_DIR="$HOME/.openclaw/extensions/mydazy-mcp"
 CONFIG_FILE="$HOME/.openclaw/openclaw.json"
 REPO_URL="https://github.com/ahelpercn/mydazy-mcp.git"
 
-echo "==> 安装 openclaw-mydazy-mcp 插件"
+echo "==> 安装 mydazy-mcp 插件"
 
 # 1. 检查 openclaw
 if ! command -v openclaw &>/dev/null; then
@@ -78,7 +78,7 @@ else:
 
 installs["mydazy-mcp"] = {
     "source": "path",
-    "spec": "openclaw-mydazy-mcp",
+    "spec": "mydazy-mcp",
     "sourcePath": plugin_dir,
     "installPath": plugin_dir
 }
