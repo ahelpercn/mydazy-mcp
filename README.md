@@ -68,9 +68,7 @@ npm install --prefix ~/.openclaw/extensions/mydazy-mcp --omit=dev
         "enabled": true,
         "config": {
           "mcpServerUrl": "登录mydazy小程序 → 设备页面 → 获取MCP地址",
-          "webhookUrl": "登录mydazy小程序 → Bot页面 → 获取Webhook地址",
-          "triggerWord": "小龙虾有结果了",
-          "defaultAgent": "main"
+          "webhookUrl": "登录mydazy小程序 → Bot页面 → 获取Webhook地址"
         }
       }
     }
@@ -128,15 +126,16 @@ ASR 常见误识别：小笼虾、小笼下、小龙侠、晓龙虾 等
 
 | 字段 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `mcpServerUrl` | string | 必填 | 小程序「设备」页面获取的 MCP 地址 |
-| `webhookUrl` | string | 必填 | 小程序「Bot」页面获取的 Webhook 地址 |
-| `triggerWord` | string | `"小龙虾有结果了"` | 播报触发词（≤10 字） |
+| `mcpServerUrl` | string | **必填** | 小程序「设备」页面获取的 MCP 地址 |
+| `webhookUrl` | string | **必填** | 小程序「Bot」页面获取的 Webhook 地址 |
+| `triggerWord` | string | `"小龙虾有结果了"` | 播报触发词，可自定义（≤10 字） |
 | `defaultAgent` | string | `"main"` | 默认路由的 OpenClaw agent ID |
-| `devices[].id` | string | 可选 | 设备唯一标识 |
-| `devices[].enabled` | boolean | `true` | 是否启用 |
 | `taskTimeoutMs` | number | `120000` | agent 任务超时（毫秒） |
 | `maxQueueSize` | number | `50` | 每设备最大队列长度 |
 | `reconnectDelayMs` | number | `5000` | WebSocket 断线重连延迟（毫秒） |
+
+> 只需填写 `mcpServerUrl` 和 `webhookUrl` 即可使用，其余字段均有默认值。
+> 如需自定义触发词，添加 `"triggerWord": "你的触发词"` 即可。
 
 ---
 

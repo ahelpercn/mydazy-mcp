@@ -73,11 +73,9 @@ pnpm install
           // 小程序「Bot」页面获取的 Webhook 地址（第 2.2 步复制）
           "webhookUrl": "登录mydazy小程序 → Bot页面 → 获取Webhook地址",
 
-          // 任务完成时设备播报的触发词（建议 ≤10 字）
-          "triggerWord": "小龙虾有结果了",
-
-          // 默认调用的 OpenClaw Agent（留空则用 main）
-          "defaultAgent": "main",
+          // 以下为可选配置，有默认值，可省略
+          // "triggerWord": "小龙虾有结果了",  // 播报触发词，可自定义（≤10 字）
+          // "defaultAgent": "main",            // 默认调用的 Agent
         },
       },
     },

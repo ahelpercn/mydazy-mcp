@@ -62,9 +62,7 @@ if "mydazy-mcp" not in entries:
         "enabled": True,
         "config": {
             "mcpServerUrl": "登录mydazy小程序 → 设备页面 → 获取MCP地址",
-            "webhookUrl": "登录mydazy小程序 → Bot页面 → 获取Webhook地址",
-            "triggerWord": "小龙虾有结果了",
-            "defaultAgent": "main"
+            "webhookUrl": "登录mydazy小程序 → Bot页面 → 获取Webhook地址"
         }
     }
     print("✅ 已添加插件配置模板（请登录mydazy小程序获取MCP地址和Webhook地址）")
