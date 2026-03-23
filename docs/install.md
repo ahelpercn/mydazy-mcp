@@ -1,12 +1,12 @@
 # mydazy-mcp 安装教程
 
-将 OpenClaw 智能体与小智（xiaozhi-esp32）语音设备打通，实现语音下达任务、完成后推送播报。
+将 OpenClaw 智能体与 MyDazy 设备打通，实现语音下达任务、完成后推送播报。
 
 ---
 
 ## 效果演示
 
-1. 唤醒小智设备，说 **"小龙虾帮我看看今天有什么日程"**
+1. 唤醒 MyDazy 设备，说 **"小龙虾帮我看看今天有什么日程"**
 2. 设备立即回复"好的，小龙虾收到了"
 3. OpenClaw 在 Mac 上执行任务（查日历、写代码、发消息……）
 4. 完成后设备自动播报结果
@@ -19,7 +19,7 @@
 | ------------ | -------------------------------------------------------- |
 | OpenClaw     | >= 2026.3                                                |
 | Node.js      | >= 22                                                    |
-| 小智设备     | xiaozhi-esp32，固件支持 MCP                              |
+| MyDazy 设备  | 固件支持 MCP 的 MyDazy 设备                              |
 | mydazy 小程序 | 微信搜索「mydazy」小程序，注册登录 |
 
 ---
@@ -42,7 +42,7 @@ pnpm install
 ### 2.1 获取 MCP 地址
 
 1. 微信搜索并打开 **mydazy 小程序**，登录您的账号
-2. 进入「**设备**」页面，找到您的小智设备
+2. 进入「**设备**」页面，找到您的 MyDazy 设备
 3. 复制 **MCP 地址**
 
 ### 2.2 获取 Webhook 地址
@@ -118,9 +118,9 @@ tail -f /tmp/openclaw-gateway.log
 
 ---
 
-## 第五步：配置小智设备系统提示词
+## 第五步：配置设备系统提示词
 
-参见 [xiaozhi-system-prompt.md](./xiaozhi-system-prompt.md)，将内容粘贴到小智 App 的智能体系统提示词中。
+参见 [device-setup.md](./device-setup.md)，将内容粘贴到 MyDazy App 的智能体系统提示词中。
 
 核心要点：
 
@@ -152,7 +152,7 @@ tail -f /tmp/openclaw-gateway.log
 说明某个插件的入口文件不存在。确认 `extensions/mydazy-mcp/index.ts` 存在（注意是根目录，不是 `src/` 下），
 且 `plugins.load.paths` 中的路径指向正确目录（即包含 `index.ts` 的那一层）。
 
-### 小智设备没有收到推送
+### 设备没有收到推送
 
 1. 检查 `webhookUrl` 是否正确（从小程序 Bot 页面重新复制）
 2. 查看 gateway 日志：`tail -50 /tmp/openclaw-gateway.log | grep mydazy`
@@ -167,7 +167,7 @@ tail -f /tmp/openclaw-gateway.log
 
 ### 任务超过 10 秒没有推送通知
 
-检查 `triggerWord` 与小智设备系统提示词中配置的触发词是否一致。
+检查 `triggerWord` 与设备系统提示词中配置的触发词是否一致。
 日志中搜索 `webhook pushed` 确认推送是否成功发出。
 
 ---
@@ -187,7 +187,7 @@ extensions/mydazy-mcp/
 │   └── core-bridge.ts      # OpenClaw core 动态加载
 ├── docs/
 │   ├── install.md          # 本文件
-│   └── xiaozhi-system-prompt.md  # 小智设备系统提示词
+│   └── device-setup.md         # MyDazy 设备配置指南
 ├── index.ts                # OpenClaw 插件注册入口（根目录）
 ├── openclaw.plugin.json    # 插件元数据
 └── package.json

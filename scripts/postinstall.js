@@ -13,23 +13,23 @@ const BOLD = "\x1b[1m";
 console.log(`
 ${GREEN}${BOLD}✅ openclaw-mydazy-mcp 安装成功！${RESET}
 
-${CYAN}下一步，登录 mydazy 小程序获取配置信息：${RESET}
+${CYAN}插件默认未启用，不会影响 Gateway 运行。${RESET}
 
-  1. 微信搜索「mydazy」小程序，登录您的账号
-  2. 进入「设备」页面，获取 ${BOLD}MCP 地址${RESET}
-  3. 进入「Bot」页面，获取 ${BOLD}Webhook 地址${RESET}
+${BOLD}方式一：运行配置向导（推荐）${RESET}
+  npx openclaw-mydazy-mcp setup
 
-${CYAN}编辑 ~/.openclaw/openclaw.json，添加以下配置：${RESET}
+${BOLD}方式二：在 OpenClaw Dashboard 中配置${RESET}
+  打开 Dashboard → 插件 → mydazy-mcp → 填写 MCP 地址和 Webhook 地址
 
+${BOLD}方式三：手动编辑 openclaw.json${RESET}
   ${YELLOW}{
     "plugins": {
-      "allow": ["mydazy-mcp"],
       "entries": {
         "mydazy-mcp": {
           "enabled": true,
           "config": {
-            "mcpServerUrl": "填入设备页面的 MCP 地址",
-            "webhookUrl": "填入 Bot 页面的 Webhook 地址"
+            "mcpServerUrl": "从 mydazy 小程序「设备」页面获取",
+            "webhookUrl": "从 mydazy 小程序「Bot」页面获取"
           }
         }
       }
@@ -38,8 +38,4 @@ ${CYAN}编辑 ~/.openclaw/openclaw.json，添加以下配置：${RESET}
 
 ${CYAN}配置完成后重启 Gateway：${RESET}
   openclaw gateway restart
-
-${CYAN}重启后在 mydazy 小程序中查看连接状态${RESET}
-
-${YELLOW}提示：触发词默认"小龙虾有结果了"，可通过 "triggerWord" 字段自定义${RESET}
 `);

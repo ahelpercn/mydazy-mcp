@@ -59,13 +59,13 @@ if plugin_dir not in paths:
 
 if "mydazy-mcp" not in entries:
     entries["mydazy-mcp"] = {
-        "enabled": True,
+        "enabled": False,
         "config": {
-            "mcpServerUrl": "登录mydazy小程序 → 设备页面 → 获取MCP地址",
-            "webhookUrl": "登录mydazy小程序 → Bot页面 → 获取Webhook地址"
+            "mcpServerUrl": "",
+            "webhookUrl": ""
         }
     }
-    print("✅ 已添加插件配置模板（请登录mydazy小程序获取MCP地址和Webhook地址）")
+    print("✅ 已添加插件配置（默认未启用，请运行 npx openclaw-mydazy-mcp setup 完成配置）")
 else:
     print("✅ 插件配置已存在，跳过")
 
@@ -81,22 +81,13 @@ with open(cfg, "w") as f:
 PYEOF
 
 echo ""
-echo "✅ 安装完成！"
+echo "✅ 安装完成！（插件默认未启用，不会影响 Gateway 运行）"
 echo ""
-echo "下一步，登录 mydazy 小程序获取配置信息："
+echo "下一步，运行配置向导："
 echo ""
-echo "  1. 打开 mydazy 小程序，登录您的账号"
-echo "  2. 进入「设备」页面，找到您的小智设备，获取 MCP 地址"
-echo "  3. 进入「Bot」页面，获取 Webhook 地址"
+echo "  npx openclaw-mydazy-mcp setup"
 echo ""
-echo "然后编辑配置文件填入对应地址："
-echo "  open ~/.openclaw/openclaw.json"
-echo ""
-echo "修改以下字段："
-echo "  plugins.entries.mydazy-mcp.config.mcpServerUrl  → 设备页面获取的 MCP 地址"
-echo "  plugins.entries.mydazy-mcp.config.webhookUrl   → Bot 页面获取的 Webhook 地址"
+echo "或者在 OpenClaw Dashboard 中配置 mydazy-mcp 插件参数。"
 echo ""
 echo "配置完成后重启 Gateway："
 echo "  openclaw gateway restart"
-echo ""
-echo "重启后可在 mydazy 小程序中查看连接状态"

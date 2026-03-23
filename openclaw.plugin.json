@@ -1,37 +1,46 @@
 {
   "id": "mydazy-mcp",
+  "name": "MyDazy MCP",
+  "description": "连接 MyDazy 设备到 OpenClaw Agent — 语音下达任务，完成后自动播报",
+  "version": "0.5.0",
   "uiHints": {
     "mcpServerUrl": {
       "label": "MCP 地址",
-      "help": "小程序「设备」页面获取的 MCP 地址",
-      "sensitive": true
+      "help": "登录 mydazy 小程序 → 设备页面 → 复制 MCP 地址",
+      "placeholder": "wss://api.xiaozhi.me/mcp/?token=...",
+      "sensitive": true,
+      "required": true
     },
     "webhookUrl": {
       "label": "Webhook 地址",
-      "help": "小程序「Bot」页面获取的 Webhook 地址",
-      "sensitive": true
+      "help": "登录 mydazy 小程序 → Bot 页面 → 复制 Webhook 地址",
+      "placeholder": "https://...",
+      "sensitive": true,
+      "required": true
     },
     "triggerWord": {
-      "label": "播报触发词（≤10 字）",
-      "help": "任务完成后推送到设备的触发词，如 小龙虾有结果了"
+      "label": "播报触发词",
+      "help": "任务完成后推送到设备的触发词，最多 10 个字",
+      "placeholder": "小龙虾有结果了"
     },
     "defaultAgent": {
-      "label": "Default Agent",
-      "help": "OpenClaw agent ID that handles tasks without an explicit agent param."
-    },
-    "devices[].id": {
-      "label": "Device ID"
+      "label": "默认 Agent",
+      "help": "执行任务的 OpenClaw Agent ID",
+      "placeholder": "main"
     },
     "taskTimeoutMs": {
-      "label": "Task Timeout (ms)",
+      "label": "任务超时 (毫秒)",
+      "help": "任务执行超时时间，默认 120000 (2 分钟)",
       "advanced": true
     },
     "maxQueueSize": {
-      "label": "Max Queue Size per Device",
+      "label": "最大队列数",
+      "help": "每设备最大排队结果数，默认 50",
       "advanced": true
     },
     "reconnectDelayMs": {
-      "label": "WS Reconnect Delay (ms)",
+      "label": "重连延迟 (毫秒)",
+      "help": "WebSocket 断开后重连等待时间，默认 5000",
       "advanced": true
     }
   },
@@ -41,17 +50,23 @@
     "required": ["mcpServerUrl", "webhookUrl"],
     "properties": {
       "mcpServerUrl": {
-        "type": "string"
+        "type": "string",
+        "description": "MCP WebSocket 地址 (从 mydazy 小程序获取)"
       },
       "webhookUrl": {
-        "type": "string"
+        "type": "string",
+        "description": "Webhook 推送地址 (从 mydazy 小程序获取)"
       },
       "triggerWord": {
         "type": "string",
-        "maxLength": 10
+        "maxLength": 10,
+        "default": "小龙虾有结果了",
+        "description": "播报触发词"
       },
       "defaultAgent": {
-        "type": "string"
+        "type": "string",
+        "default": "main",
+        "description": "默认 Agent ID"
       },
       "devices": {
         "type": "array",
@@ -61,22 +76,25 @@
           "required": ["id"],
           "properties": {
             "id": { "type": "string" },
-            "enabled": { "type": "boolean" }
+            "enabled": { "type": "boolean", "default": true }
           }
         }
       },
       "maxQueueSize": {
         "type": "integer",
         "minimum": 1,
-        "maximum": 200
+        "maximum": 200,
+        "default": 50
       },
       "taskTimeoutMs": {
         "type": "integer",
-        "minimum": 5000
+        "minimum": 5000,
+        "default": 120000
       },
       "reconnectDelayMs": {
         "type": "integer",
-        "minimum": 500
+        "minimum": 500,
+        "default": 5000
       }
     }
   }

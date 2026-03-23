@@ -15,14 +15,39 @@ const mydazyMcpPlugin = {
   id: "mydazy-mcp",
   name: "MyDazy MCP",
   description:
-    "Connect OpenClaw agents to xiaozhi-esp32 devices via the xiaozhi hosted MCP relay and push TTS notifications.",
+    "Connect OpenClaw agents to MyDazy devices via MCP relay with TTS push notifications.",
   configSchema: mydazyMcpConfigSchema,
 
   register(api: OpenClawPluginApi) {
-    const config = mydazyMcpConfigSchema.parse(api.pluginConfig);
+    // ----------------------------------------------------------------
+    // Graceful config validation: if required fields are missing or
+    // the plugin is disabled, skip registration silently so Gateway
+    // doesn't crash on a fresh/incomplete install.
+    // ----------------------------------------------------------------
+    const raw =
+      api.pluginConfig && typeof api.pluginConfig === "object"
+        ? (api.pluginConfig as Record<string, unknown>)
+        : {};
 
-    // Parse once to validate; will throw early if required fields are missing
-    MydazyMcpConfigSchema.parse(config);
+    if (raw.enabled === false) {
+      api.logger.info(
+        "[mydazy-mcp] Plugin disabled — skipping. Run `npx openclaw-mydazy-mcp setup` to configure.",
+      );
+      return;
+    }
+
+    const parsed = MydazyMcpConfigSchema.safeParse(raw);
+    if (!parsed.success) {
+      const missing = parsed.error.issues
+        .map((i) => i.path.join("."))
+        .join(", ");
+      api.logger.warn(
+        `[mydazy-mcp] Config incomplete (${missing}) — plugin not loaded. Run \`npx openclaw-mydazy-mcp setup\` to configure.`,
+      );
+      return;
+    }
+
+    const config = parsed.data;
 
     let runtime: MydazyRuntime | null = null;
 

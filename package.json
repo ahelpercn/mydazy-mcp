@@ -1,7 +1,7 @@
 {
   "name": "openclaw-mydazy-mcp",
-  "version": "0.4.0",
-  "description": "OpenClaw plugin — connect agents to xiaozhi-esp32 voice devices via MCP relay with mydazy TTS push",
+  "version": "0.5.0",
+  "description": "OpenClaw plugin — connect agents to MyDazy voice devices via MCP relay with TTS push",
   "keywords": [
     "esp32",
     "mcp",
@@ -28,8 +28,12 @@
     "uninstall.sh",
     "README.md"
   ],
+  "bin": {
+    "openclaw-mydazy-mcp": "./scripts/setup.js"
+  },
   "scripts": {
-    "postinstall": "node scripts/postinstall.js"
+    "postinstall": "node scripts/postinstall.js",
+    "setup": "node scripts/setup.js"
   },
   "engines": {
     "node": ">=22"
