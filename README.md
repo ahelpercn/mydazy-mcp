@@ -1,169 +1,135 @@
-# mydazy-mcp
+# 🦞 mydazy-mcp
 
-将 [OpenClaw](https://openclaw.ai) 智能体与 **小智（xiaozhi-esp32）** 语音设备打通：
+**一句话让 AI 帮你干活，干完了自动语音汇报。**
 
-- 唤醒设备，语音下达任务 → OpenClaw 后台执行 → 完成后自动播报结果
-- 支持查日历、发消息、写代码等任意 OpenClaw Agent 能力
-
----
-
-## 效果演示
-
-1. 唤醒小智设备，说 **"小龙虾帮我看看今天有什么日程"**
-2. 设备回复："好的，小龙虾收到了"
-3. OpenClaw 在后台执行任务
-4. 完成后设备自动播报结果摘要
+用小智音箱说一句"小龙虾帮我查一下今天的日程"，AI 在后台执行，完成后音箱自动播报结果。无需盯屏幕，无需动手，张嘴就行。
 
 ---
 
-## 前置条件
+## 它能做什么
 
-| 项目 | 要求 |
-|------|------|
-| OpenClaw | `>= 2026.3`（[安装教程](https://openclaw.ai/install)） |
-| Node.js | `>= 22` |
-| 小智设备 | xiaozhi-esp32，固件支持 MCP |
-| mydazy 小程序 | 微信搜索「mydazy」小程序，注册登录 |
-| 小智设备 MCP 地址 | 小程序 → 设备页面 → 获取 MCP 地址 |
-| Bot Webhook 地址 | 小程序 → Bot 页面 → 获取 Webhook 地址 |
+```
+你："小智，小龙虾帮我看看邮箱有没有新邮件"
+音箱："好的，小龙虾收到了"
+      ... AI 后台执行中 ...
+音箱："小龙虾有结果了。你有 3 封未读邮件，第一封是张三发的关于项目进度的..."
+```
+
+所有 OpenClaw Agent 能做的事，你都可以用语音下达：查日程、发消息、搜信息、写代码、控制 Mac 应用…… 说完就走，结果自动送到耳边。
 
 ---
 
-## 安装
+## 30 秒安装
 
-### 方式一：一键安装脚本（推荐）
+**方式一：一键脚本（推荐）**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ahelpercn/mydazy-mcp/main/install.sh | bash
 ```
 
-或下载后运行：
+**方式二：npm 安装**
 
 ```bash
-git clone https://github.com/ahelpercn/mydazy-mcp.git
-bash mydazy-mcp/install.sh
+npm install openclaw-mydazy-mcp
 ```
 
-### 方式二：手动安装
+安装后只需填 **2 个地址**，打开 mydazy 小程序复制即可：
 
-```bash
-# 1. 克隆到 openclaw 扩展目录
-git clone https://github.com/ahelpercn/mydazy-mcp.git ~/.openclaw/extensions/mydazy-mcp
-
-# 2. 安装依赖
-npm install --prefix ~/.openclaw/extensions/mydazy-mcp --omit=dev
-
-# 3. 编辑 ~/.openclaw/openclaw.json，加入以下配置：
-```
-
-```jsonc
+```json
 {
-  "plugins": {
-    "allow": ["mydazy-mcp"],
-    "load": {
-      "paths": ["~/.openclaw/extensions/mydazy-mcp"]
-    },
-    "entries": {
-      "mydazy-mcp": {
-        "enabled": true,
-        "config": {
-          "mcpServerUrl": "登录mydazy小程序 → 设备页面 → 获取MCP地址",
-          "webhookUrl": "登录mydazy小程序 → Bot页面 → 获取Webhook地址"
-        }
-      }
-    }
-  }
+  "mcpServerUrl": "小程序 → 设备页面 → 复制 MCP 地址",
+  "webhookUrl": "小程序 → Bot 页面 → 复制 Webhook 地址"
 }
 ```
 
-```bash
-# 4. 重启 Gateway
-openclaw gateway restart
-```
+重启 Gateway 就能用了：`openclaw gateway restart`
 
 ---
 
-## 获取配置信息
+## 使用示例
 
-### MCP 地址（设备页面）
+| 你说 | AI 做了什么 | 音箱播报 |
+|------|------------|---------|
+| 小龙虾帮我看看今天有什么日程 | 读取 Mac 日历 | "你今天有 3 个会议，上午 10 点产品评审..." |
+| 小龙虾给张三发消息说我晚点到 | 发送 iMessage | "已经给张三发了消息" |
+| 小龙虾今天 A 股怎么样 | 搜索实时行情 | "上证指数今天涨了 0.8%..." |
+| 小龙虾帮我打开 Figma | 启动 Mac 应用 | "Figma 已打开" |
 
-1. 微信搜索并打开 **mydazy 小程序**，登录您的账号
-2. 进入「**设备**」页面，找到您的小智设备
-3. 复制 **MCP 地址**，填入配置文件的 `mcpServerUrl` 字段
-
-### Webhook 地址（Bot 页面）
-
-1. 在 mydazy 小程序中进入「**Bot**」页面
-2. 复制 **Webhook 地址**，填入配置文件的 `webhookUrl` 字段
-
-### 查看连接状态
-
-配置完成并重启 Gateway 后，回到 mydazy 小程序即可查看设备的连接状态
+> **触发词**："小龙虾"是指令前缀，不是唤醒词。先说"小智"唤醒音箱，再说"小龙虾帮我..."。
 
 ---
 
-## 小智设备系统提示词
-
-在小智 App → 智能体设置 → 系统提示词中粘贴（见 [docs/xiaozhi-system-prompt.md](docs/xiaozhi-system-prompt.md)）：
+## 工作原理
 
 ```
-你是一个语音助手，同时接入了"小龙虾"AI任务系统（MCP工具）。
-
-当用户语音中出现以下任意词汇开头时，立即调用 send_task 工具：
-正确写法：小龙虾
-ASR 常见误识别：小笼虾、小笼下、小龙侠、晓龙虾 等
-
-触发后：
-1. 提取前缀后面的完整指令作为 prompt
-2. 调用 send_task 提交任务
-3. 立即简短回复用户（如"好的，小龙虾收到了"）
-4. 听到推送词"小龙虾有结果了"时，调用 get_results 获取并朗读结果
+语音指令 → 小智设备 → MCP 请求 → mydazy-mcp → OpenClaw Agent 执行
+                                                       ↓
+语音播报 ← 小智设备 ← Webhook 推送 ← 结果口语化 ← 任务完成
 ```
+
+**5 个 MCP 工具**：
+
+| 工具 | 用途 |
+|------|------|
+| `send_task` | 提交任务，AI 后台执行 |
+| `get_results` | 拉取已完成任务的结果 |
+| `task_status` | 查询任务进度 |
+| `push_notification` | 直接推送一条语音消息 |
+| `check_service` | 检查小龙虾服务是否在线 |
 
 ---
 
-## 配置项
+## 配置
 
-| 字段 | 类型 | 默认值 | 说明 |
+只需填 2 个地址即可使用，其余均有默认值：
+
+| 字段 | 必填 | 默认值 | 说明 |
 |------|------|--------|------|
-| `mcpServerUrl` | string | **必填** | 小程序「设备」页面获取的 MCP 地址 |
-| `webhookUrl` | string | **必填** | 小程序「Bot」页面获取的 Webhook 地址 |
-| `triggerWord` | string | `"小龙虾有结果了"` | 播报触发词，可自定义（≤10 字） |
-| `defaultAgent` | string | `"main"` | 默认路由的 OpenClaw agent ID |
-| `taskTimeoutMs` | number | `120000` | agent 任务超时（毫秒） |
-| `maxQueueSize` | number | `50` | 每设备最大队列长度 |
-| `reconnectDelayMs` | number | `5000` | WebSocket 断线重连延迟（毫秒） |
+| `mcpServerUrl` | ✅ | — | 小程序「设备」页面获取 |
+| `webhookUrl` | ✅ | — | 小程序「Bot」页面获取 |
+| `triggerWord` | | `"小龙虾有结果了"` | 播报触发词，可自定义（≤10 字） |
+| `defaultAgent` | | `"main"` | 默认 Agent ID |
+| `taskTimeoutMs` | | `120000` | 任务超时时间（毫秒） |
 
-> 只需填写 `mcpServerUrl` 和 `webhookUrl` 即可使用，其余字段均有默认值。
-> 如需自定义触发词，添加 `"triggerWord": "你的触发词"` 即可。
+**自定义触发词示例**：想用"小助手有结果了"代替默认触发词？加一行配置：
+
+```json
+{ "triggerWord": "小助手有结果了" }
+```
 
 ---
 
-## 验证连接
+## 卸载
+
+**脚本安装的卸载**：
 
 ```bash
-# 查看插件日志
-tail -f /tmp/openclaw-gateway.log | grep mydazy
+curl -fsSL https://raw.githubusercontent.com/ahelpercn/mydazy-mcp/main/uninstall.sh | bash
+```
 
-# 成功示例：
-# [mydazy-mcp] MCP client started
-# [mydazy-mcp] relay connected
-# [mydazy-mcp] ← {"method":"tools/list",...}
+**npm 安装的卸载**：
+
+```bash
+npm uninstall openclaw-mydazy-mcp
 ```
 
 ---
 
 ## 常见问题
 
-**设备没有收到推送？**
-- 检查 `webhookUrl` 是否正确（从小程序 Bot 页面重新复制）
-- 查看日志：`grep mydazy /tmp/openclaw-gateway.log | tail -50`
+**设备没有收到播报？** — 检查 `webhookUrl` 是否正确，在小程序 Bot 页面重新复制。
 
-**任务超时？**
-- 默认 120 秒；调大 `taskTimeoutMs` 配置
+**任务超时？** — 默认 120 秒，复杂任务可调大 `taskTimeoutMs`。
 
-**报错 "extension entry escapes package directory"？**
-- 确认 `plugins.load.paths` 指向含 `index.ts` 的目录（非 `src/` 子目录）
+**语音识别不准？** — 系统提示词已内置"小龙虾"的常见误识别词（小笼虾、小龙侠等），会自动纠正。
+
+---
+
+## 获取小智设备
+
+还没有小智音箱？扫码进入 mydazy 小程序了解更多，或直接购买支持 MCP 的小智设备。
+
+**微信搜索「mydazy」小程序** → 注册 → 绑定设备 → 开始体验
 
 ---
 
