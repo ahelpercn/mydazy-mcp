@@ -16,11 +16,11 @@
  */
 
 import { WebSocket } from "ws";
-import type { MydazyMcpConfig } from "./config.js";
-import { buildOralSummary } from "./result-narrator.js";
-import { TaskQueue } from "./task-queue.js";
-import { runTask } from "./task-runner.js";
-import { pushWebhook } from "./webhook-pusher.js";
+import type { MydazyMcpConfig } from "./config";
+import { buildOralSummary } from "./result-narrator";
+import { TaskQueue } from "./task-queue";
+import { runTask } from "./task-runner";
+import { pushWebhook } from "./webhook-pusher";
 
 type Logger = {
   info(msg: string): void;
@@ -309,7 +309,7 @@ export class McpClient {
         this.sendResult(id, {
           protocolVersion: "2024-11-05",
           capabilities: { tools: {} },
-          serverInfo: { name: "mydazy-mcp", version: "0.5.0" },
+          serverInfo: { name: "mydazy-mcp", version: "0.5.1" },
         });
         break;
 

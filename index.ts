@@ -2,10 +2,10 @@ import type {
   GatewayRequestHandlerOptions,
   OpenClawPluginApi,
 } from "openclaw/plugin-sdk/mydazy-mcp";
-import { MydazyMcpConfigSchema, mydazyMcpConfigSchema } from "./src/config.js";
-import { McpClient } from "./src/mcp-client.js";
-import { buildOralSummary, isInlineable } from "./src/result-narrator.js";
-import { pushWebhook } from "./src/webhook-pusher.js";
+import { MydazyMcpConfigSchema, mydazyMcpConfigSchema } from "./src/config";
+import { McpClient } from "./src/mcp-client";
+import { buildOralSummary, isInlineable } from "./src/result-narrator";
+import { pushWebhook } from "./src/webhook-pusher";
 
 type MydazyRuntime = {
   client: McpClient;

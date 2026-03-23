@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import type { MydazyMcpConfig } from "./config.js";
-import type { QueueEntry, Task, TaskStatus } from "./types.js";
+import type { MydazyMcpConfig } from "./config";
+import type { QueueEntry, Task, TaskStatus } from "./types";
 
 type DoneCallback = (task: Task) => void;
 

@@ -9,7 +9,7 @@
  * - has_queue     true = device should call MCP get_results for the full summary
  */
 
-import type { DeviceWebhookPayload } from "./types.js";
+import type { DeviceWebhookPayload } from "./types";
 
 export type PushResult = { ok: true } | { ok: false; error: string };
 

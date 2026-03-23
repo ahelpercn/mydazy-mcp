@@ -12,9 +12,9 @@
 
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
-import { buildOralSummary, isInlineable } from "./result-narrator.js";
-import type { TaskQueue } from "./task-queue.js";
-import { pushWebhook } from "./webhook-pusher.js";
+import { buildOralSummary, isInlineable } from "./result-narrator";
+import type { TaskQueue } from "./task-queue";
+import { pushWebhook } from "./webhook-pusher";
 
 const execAsync = promisify(exec);
 
