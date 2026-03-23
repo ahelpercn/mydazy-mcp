@@ -1,16 +1,10 @@
 /**
- * Converts agent markdown output into a short, spoken-word oral summary.
+ * Converts agent markdown output into clean plain text for device TTS.
  *
- * Rules:
- *  - Strip common markdown symbols (headers, bold, code fences, links)
- *  - Collapse whitespace
- *  - Truncate at a sentence boundary ≤ MAX_CHARS
- *  - Prepend a spoken prefix so the device reads naturally
+ * Strategy: strip markdown formatting so the device-side LLM can understand
+ * the full content and narrate it naturally. No truncation — let the device
+ * LLM decide what to emphasize and how to summarize.
  */
-
-const MAX_CHARS = 120;
-
-const ORAL_PREFIXES = ["好的，来汇报一下，", "收到，汇报进展：", "小龙虾来报告，"];
 
 /** Strip markdown and flatten to plain text */
 function stripMarkdown(text: string): string {
@@ -35,53 +29,27 @@ function stripMarkdown(text: string): string {
       .replace(/^\s*[-*+]\s+/gm, "")
       .replace(/^\s*\d+\.\s+/gm, "")
       // Extra blank lines
-      .replace(/\n{2,}/g, " ")
-      .replace(/\n/g, " ")
-      // Collapse spaces
-      .replace(/\s{2,}/g, " ")
+      .replace(/\n{2,}/g, "\n")
+      // Collapse spaces (but keep single newlines for readability)
+      .replace(/[ \t]{2,}/g, " ")
       .trim()
   );
 }
 
-/** Truncate at the last sentence-ending punctuation ≤ limit chars */
-function truncateAtSentence(text: string, limit: number): string {
-  if (text.length <= limit) {
-    return text;
-  }
-  const chunk = text.slice(0, limit);
-  // CJK and ASCII sentence endings
-  const lastEnd = Math.max(
-    chunk.lastIndexOf("。"),
-    chunk.lastIndexOf("！"),
-    chunk.lastIndexOf("？"),
-    chunk.lastIndexOf("."),
-    chunk.lastIndexOf("!"),
-    chunk.lastIndexOf("?"),
-  );
-  if (lastEnd > 10) {
-    return chunk.slice(0, lastEnd + 1);
-  }
-  // Fall back to word boundary or hard cut
-  const lastSpace = chunk.lastIndexOf(" ");
-  return lastSpace > 10 ? chunk.slice(0, lastSpace) : chunk;
-}
-
 /**
- * Build an oral summary from raw agent output.
+ * Build a clean text version of the agent result for device TTS.
+ *
+ * The device-side LLM will receive this full text and narrate it
+ * in its own conversational style — no artificial truncation or prefixes.
  *
  * @param rawResult  Full agent markdown response
- * @param prefixIdx  Which spoken prefix to use (deterministic per taskId, optional)
  */
-export function buildOralSummary(rawResult: string, prefixIdx = 0): string {
+export function buildOralSummary(rawResult: string): string {
   const plain = stripMarkdown(rawResult);
   if (!plain) {
-    return "完成了，没有更多内容。";
+    return "任务完成，没有更多内容。";
   }
-
-  const prefix = ORAL_PREFIXES[prefixIdx % ORAL_PREFIXES.length]!;
-  const budget = MAX_CHARS - prefix.length;
-  const body = truncateAtSentence(plain, budget);
-  return `${prefix}${body}`;
+  return plain;
 }
 
 /** Quick helper: is text short enough to inline on the device (≤8 chars)? */

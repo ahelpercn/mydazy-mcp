@@ -2,14 +2,18 @@
   "id": "mydazy-mcp",
   "uiHints": {
     "mcpServerUrl": {
-      "label": "MCP Relay URL",
-      "help": "Xiaozhi hosted MCP WebSocket, e.g. wss://api.xiaozhi.me/mcp/?token=...",
+      "label": "MCP 地址",
+      "help": "小程序「设备」页面获取的 MCP 地址",
       "sensitive": true
     },
-    "pushttsUrl": {
-      "label": "PushTTS Webhook URL",
-      "help": "mydazy push endpoint, e.g. http://www.mydazy.com/ota/pushtts?token=...",
+    "webhookUrl": {
+      "label": "Webhook 地址",
+      "help": "小程序「Bot」页面获取的 Webhook 地址",
       "sensitive": true
+    },
+    "triggerWord": {
+      "label": "播报触发词（≤10 字）",
+      "help": "任务完成后推送到设备的触发词，如 小龙虾有结果了"
     },
     "defaultAgent": {
       "label": "Default Agent",
@@ -17,14 +21,6 @@
     },
     "devices[].id": {
       "label": "Device ID"
-    },
-    "devices[].webhookUrl": {
-      "label": "Device Webhook URL (legacy)",
-      "help": "Per-device push URL. Leave empty to use the global pushttsUrl."
-    },
-    "devices[].triggerWord": {
-      "label": "Trigger Word (≤10 chars)",
-      "help": "Word TTS-spoken on device when results are ready, e.g. 小龙虾有结果了"
     },
     "taskTimeoutMs": {
       "label": "Task Timeout (ms)",
@@ -42,13 +38,17 @@
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["mcpServerUrl", "pushttsUrl"],
+    "required": ["mcpServerUrl", "webhookUrl"],
     "properties": {
       "mcpServerUrl": {
         "type": "string"
       },
-      "pushttsUrl": {
+      "webhookUrl": {
         "type": "string"
+      },
+      "triggerWord": {
+        "type": "string",
+        "maxLength": 10
       },
       "defaultAgent": {
         "type": "string"
@@ -58,11 +58,9 @@
         "items": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["id", "webhookUrl"],
+          "required": ["id"],
           "properties": {
             "id": { "type": "string" },
-            "webhookUrl": { "type": "string" },
-            "triggerWord": { "type": "string" },
             "enabled": { "type": "boolean" }
           }
         }

@@ -64,7 +64,7 @@ const MCP_TOOLS = [
   {
     name: "get_results",
     description:
-      "【触发条件】收到推送触发词（小龙虾有结果了，或同音谐音）后立即调用，获取已完成任务的口语化结果并朗读给用户。也可在用户询问结果怎么样、有什么消息时调用。返回内容已是口播格式，直接朗读即可。",
+      "【触发条件】收到推送触发词（小龙虾有结果了，或同音谐音）后立即调用，获取已完成任务的结果。也可在用户询问结果怎么样、有什么消息时调用。返回内容请用口语化方式简洁汇报重点，不要逐字朗读原文。",
     inputSchema: {
       type: "object",
       properties: {
@@ -309,7 +309,7 @@ export class McpClient {
         this.sendResult(id, {
           protocolVersion: "2024-11-05",
           capabilities: { tools: {} },
-          serverInfo: { name: "mydazy-mcp", version: "2026.3.12" },
+          serverInfo: { name: "mydazy-mcp", version: "0.3.0" },
         });
         break;
 
@@ -375,7 +375,7 @@ export class McpClient {
     // Normalise empty sessionId → "broadcast" so slot keys stay consistent
     // with toolGetResults() which also uses || "broadcast".
     const task = this.queue.create({ agent, prompt, sourceDevice: this.sessionId || "broadcast" });
-    const triggerWord = this.config.devices[0]?.triggerWord ?? "小龙虾有结果了";
+    const triggerWord = this.config.triggerWord;
 
     // Acknowledge receipt immediately; task runs in background.
     this.sendToolText(id, `好的，小龙虾收到了 ✅\n任务正在后台执行，有结果会通知你。`);
@@ -387,7 +387,7 @@ export class McpClient {
       prompt,
       timeoutMs: this.config.taskTimeoutMs,
       queue: this.queue,
-      pushttsUrl: this.config.pushttsUrl,
+      webhookUrl: this.config.webhookUrl,
       triggerWord,
       logger: this.logger,
     }).catch((e) => {
@@ -407,8 +407,17 @@ export class McpClient {
       return;
     }
 
-    const lines = entries.map((e, i) => `${i + 1}. [${e.taskId.slice(0, 8)}] ${e.oralText}`);
-    this.sendToolText(id, lines.join("\n\n"));
+    const NARRATE_HINT = "【请用口语化简洁汇报以下内容，抓重点，不要逐字朗读】\n\n";
+
+    if (entries.length === 1) {
+      // Single result — return with narration hint
+      this.sendToolText(id, `${NARRATE_HINT}${entries[0]!.oralText}`);
+      return;
+    }
+
+    // Multiple results — number them for clarity
+    const lines = entries.map((e, i) => `第${i + 1}条：${e.oralText}`);
+    this.sendToolText(id, `${NARRATE_HINT}一共有${entries.length}条结果。\n\n${lines.join("\n\n")}`);
   }
 
   private toolTaskStatus(id: string | number, args: Record<string, unknown>): void {
@@ -457,10 +466,10 @@ export class McpClient {
     const isShort = trimmed.length <= 8;
 
     const result = await pushWebhook(
-      this.config.pushttsUrl,
+      this.config.webhookUrl,
       {
         type: "tts",
-        text: this.config.devices[0]?.triggerWord ?? "小龙虾有结果了",
+        text: this.config.triggerWord,
         inline_result: isShort ? trimmed : undefined,
         has_queue: !isShort,
       },

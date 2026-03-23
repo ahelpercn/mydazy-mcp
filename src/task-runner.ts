@@ -5,7 +5,9 @@
  * This approach is version-agnostic: works with any OpenClaw ≥ 2026.1 installation
  * without depending on internal extensionAPI.js paths.
  *
- * Triggers the pushtts webhook only when the task produces real content.
+ * Includes push deduplication: when multiple tasks complete within a short window,
+ * only one webhook push is sent. The device will pull all pending results at once
+ * via get_results.
  */
 
 import { exec } from "node:child_process";
@@ -28,7 +30,7 @@ export type RunTaskOptions = {
   prompt: string;
   timeoutMs: number;
   queue: TaskQueue;
-  pushttsUrl: string;
+  webhookUrl: string;
   triggerWord: string;
   logger: Logger;
 };
@@ -56,8 +58,58 @@ function resolveOpenClawBin(): string {
   return candidates[0]; // openclaw gateway already ran us, so Homebrew path is correct on Mac
 }
 
+// ---------------------------------------------------------------------------
+// Push deduplication: multiple tasks completing within PUSH_COOLDOWN_MS
+// only trigger one webhook push. The device pulls all results at once.
+// ---------------------------------------------------------------------------
+
+const PUSH_COOLDOWN_MS = 3_000;
+let lastPushTime = 0;
+let pendingPushTimer: ReturnType<typeof setTimeout> | null = null;
+
+type DeferredPush = {
+  webhookUrl: string;
+  triggerWord: string;
+  logger: Logger;
+};
+
+function scheduleDedupPush(opts: DeferredPush): void {
+  const now = Date.now();
+  const elapsed = now - lastPushTime;
+
+  // Already have a pending push scheduled — skip, it will cover this result too
+  if (pendingPushTimer) return;
+
+  const delay = elapsed >= PUSH_COOLDOWN_MS ? 0 : PUSH_COOLDOWN_MS - elapsed;
+
+  pendingPushTimer = setTimeout(async () => {
+    pendingPushTimer = null;
+    lastPushTime = Date.now();
+
+    const result = await pushWebhook(
+      opts.webhookUrl,
+      {
+        type: "tts",
+        text: opts.triggerWord,
+        has_queue: true,
+      },
+      opts.logger,
+    );
+
+    if (result.ok) {
+      opts.logger.info("[mydazy-mcp] deduped webhook push sent");
+    } else {
+      opts.logger.warn(`[mydazy-mcp] deduped webhook push failed: ${result.error}`);
+    }
+  }, delay);
+}
+
+// ---------------------------------------------------------------------------
+// Main task runner
+// ---------------------------------------------------------------------------
+
 export async function runTask(opts: RunTaskOptions): Promise<void> {
-  const { taskId, agent, prompt, timeoutMs, queue, pushttsUrl, triggerWord, logger } = opts;
+  const { taskId, agent, prompt, timeoutMs, queue, webhookUrl, triggerWord, logger } = opts;
 
   queue.markRunning(taskId);
   queue.appendProgress(taskId, `任务开始：agent=${agent}`);
@@ -94,21 +146,28 @@ export async function runTask(opts: RunTaskOptions): Promise<void> {
       return;
     }
 
+    // For very short results, inline on device (no need for get_results pull)
     const trimmed = oralSummary.trim();
-    const inlineResult = isInlineable(trimmed) ? trimmed : undefined;
+    if (isInlineable(trimmed)) {
+      lastPushTime = Date.now();
+      await pushWebhook(
+        webhookUrl,
+        {
+          type: "tts",
+          text: triggerWord,
+          inline_result: trimmed,
+          has_queue: false,
+        },
+        logger,
+      );
+      logger.info(`[mydazy-mcp] task ${taskId} done, inline result pushed`);
+      return;
+    }
 
-    await pushWebhook(
-      pushttsUrl,
-      {
-        type: "tts",
-        text: triggerWord,
-        inline_result: inlineResult,
-        has_queue: !inlineResult,
-      },
-      logger,
-    );
-
-    logger.info(`[mydazy-mcp] task ${taskId} done, webhook pushed`);
+    // Normal result: use deduplication — if multiple tasks finish close together,
+    // only one push is sent and the device pulls all results via get_results.
+    logger.info(`[mydazy-mcp] task ${taskId} done, scheduling deduped push`);
+    scheduleDedupPush({ webhookUrl, triggerWord, logger });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     queue.markError(taskId, msg);

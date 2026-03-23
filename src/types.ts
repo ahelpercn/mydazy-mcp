@@ -44,8 +44,5 @@ export type DeviceWebhookPayload = {
 
 export type DeviceConfig = {
   id: string;
-  webhookUrl: string;
-  /** ≤10 chars, e.g. "小龙虾有结果了" */
-  triggerWord: string;
   enabled: boolean;
 };

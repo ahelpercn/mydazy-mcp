@@ -1,4 +1,4 @@
-# openclaw-mydazy-mcp
+# mydazy-mcp
 
 将 [OpenClaw](https://openclaw.ai) 智能体与 **小智（xiaozhi-esp32）** 语音设备打通：
 
@@ -23,8 +23,9 @@
 | OpenClaw | `>= 2026.3`（[安装教程](https://openclaw.ai/install)） |
 | Node.js | `>= 22` |
 | 小智设备 | xiaozhi-esp32，固件支持 MCP |
-| 小智账号 | [xiaozhi.me](https://xiaozhi.me) 注册，创建 MCP endpoint 获取 token |
-| mydazy 账号 | [mydazy.com](https://www.mydazy.com) 注册，获取 PushTTS Webhook URL |
+| mydazy 小程序 | 微信搜索「mydazy」小程序，注册登录 |
+| 小智设备 MCP 地址 | 小程序 → 设备页面 → 获取 MCP 地址 |
+| Bot Webhook 地址 | 小程序 → Bot 页面 → 获取 Webhook 地址 |
 
 ---
 
@@ -66,17 +67,10 @@ npm install --prefix ~/.openclaw/extensions/mydazy-mcp --omit=dev
       "mydazy-mcp": {
         "enabled": true,
         "config": {
-          "mcpServerUrl": "wss://api.xiaozhi.me/mcp/?token=YOUR_XIAOZHI_TOKEN",
-          "pushttsUrl": "https://www.mydazy.com/v1/ota/pushtts?token=YOUR_WEBHOOK_TOKEN",
-          "defaultAgent": "main",
-          "devices": [
-            {
-              "id": "xiaozhi-default",
-              "webhookUrl": "https://www.mydazy.com/v1/ota/pushtts?token=YOUR_WEBHOOK_TOKEN",
-              "triggerWord": "小龙虾有结果了",
-              "enabled": true
-            }
-          ]
+          "mcpServerUrl": "登录mydazy小程序 → 设备页面 → 获取MCP地址",
+          "webhookUrl": "登录mydazy小程序 → Bot页面 → 获取Webhook地址",
+          "triggerWord": "小龙虾有结果了",
+          "defaultAgent": "main"
         }
       }
     }
@@ -91,18 +85,22 @@ openclaw gateway restart
 
 ---
 
-## 获取 Token
+## 获取配置信息
 
-### 小智 MCP WebSocket URL
+### MCP 地址（设备页面）
 
-1. 登录 [xiaozhi.me](https://xiaozhi.me) → 智能体管理 → 目标智能体
-2. **MCP 服务器** → **添加 MCP Server** → 选择 WebSocket 连接
-3. 复制 URL（格式：`wss://api.xiaozhi.me/mcp/?token=eyJ...`）
+1. 微信搜索并打开 **mydazy 小程序**，登录您的账号
+2. 进入「**设备**」页面，找到您的小智设备
+3. 复制 **MCP 地址**，填入配置文件的 `mcpServerUrl` 字段
 
-### mydazy PushTTS Webhook URL
+### Webhook 地址（Bot 页面）
 
-1. 登录 [mydazy.com](https://www.mydazy.com) → 控制台 → Webhook 设置
-2. 复制 PushTTS URL（格式：`https://www.mydazy.com/v1/ota/pushtts?token=whk_...`）
+1. 在 mydazy 小程序中进入「**Bot**」页面
+2. 复制 **Webhook 地址**，填入配置文件的 `webhookUrl` 字段
+
+### 查看连接状态
+
+配置完成并重启 Gateway 后，回到 mydazy 小程序即可查看设备的连接状态
 
 ---
 
@@ -130,12 +128,11 @@ ASR 常见误识别：小笼虾、小笼下、小龙侠、晓龙虾 等
 
 | 字段 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `mcpServerUrl` | string | 必填 | 小智 MCP relay WebSocket URL |
-| `pushttsUrl` | string | 必填 | mydazy PushTTS Webhook URL |
+| `mcpServerUrl` | string | 必填 | 小程序「设备」页面获取的 MCP 地址 |
+| `webhookUrl` | string | 必填 | 小程序「Bot」页面获取的 Webhook 地址 |
+| `triggerWord` | string | `"小龙虾有结果了"` | 播报触发词（≤10 字） |
 | `defaultAgent` | string | `"main"` | 默认路由的 OpenClaw agent ID |
-| `devices[].id` | string | 必填 | 设备唯一标识 |
-| `devices[].webhookUrl` | string | 必填 | 该设备的 PushTTS URL |
-| `devices[].triggerWord` | string | `"小龙虾有结果了"` | 播报触发词（≤10 字） |
+| `devices[].id` | string | 可选 | 设备唯一标识 |
 | `devices[].enabled` | boolean | `true` | 是否启用 |
 | `taskTimeoutMs` | number | `120000` | agent 任务超时（毫秒） |
 | `maxQueueSize` | number | `50` | 每设备最大队列长度 |
@@ -160,7 +157,7 @@ tail -f /tmp/openclaw-gateway.log | grep mydazy
 ## 常见问题
 
 **设备没有收到推送？**
-- 检查 `pushttsUrl` 是否正确（含 token）
+- 检查 `webhookUrl` 是否正确（从小程序 Bot 页面重新复制）
 - 查看日志：`grep mydazy /tmp/openclaw-gateway.log | tail -50`
 
 **任务超时？**

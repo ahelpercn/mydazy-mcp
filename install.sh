@@ -61,18 +61,13 @@ if "mydazy-mcp" not in entries:
     entries["mydazy-mcp"] = {
         "enabled": True,
         "config": {
-            "mcpServerUrl": "wss://api.xiaozhi.me/mcp/?token=YOUR_XIAOZHI_TOKEN",
-            "pushttsUrl": "https://www.mydazy.com/v1/ota/pushtts?token=YOUR_WEBHOOK_TOKEN",
-            "defaultAgent": "main",
-            "devices": [{
-                "id": "xiaozhi-default",
-                "webhookUrl": "https://www.mydazy.com/v1/ota/pushtts?token=YOUR_WEBHOOK_TOKEN",
-                "triggerWord": "小龙虾有结果了",
-                "enabled": True
-            }]
+            "mcpServerUrl": "登录mydazy小程序 → 设备页面 → 获取MCP地址",
+            "webhookUrl": "登录mydazy小程序 → Bot页面 → 获取Webhook地址",
+            "triggerWord": "小龙虾有结果了",
+            "defaultAgent": "main"
         }
     }
-    print("✅ 已添加插件配置模板（请填入您的 token）")
+    print("✅ 已添加插件配置模板（请登录mydazy小程序获取MCP地址和Webhook地址）")
 else:
     print("✅ 插件配置已存在，跳过")
 
@@ -90,12 +85,20 @@ PYEOF
 echo ""
 echo "✅ 安装完成！"
 echo ""
-echo "下一步，编辑配置文件填入您的 token："
+echo "下一步，登录 mydazy 小程序获取配置信息："
+echo ""
+echo "  1. 打开 mydazy 小程序，登录您的账号"
+echo "  2. 进入「设备」页面，找到您的小智设备，获取 MCP 地址"
+echo "  3. 进入「Bot」页面，获取 Webhook 地址"
+echo ""
+echo "然后编辑配置文件填入对应地址："
 echo "  open ~/.openclaw/openclaw.json"
 echo ""
 echo "修改以下字段："
-echo "  plugins.entries.mydazy-mcp.config.mcpServerUrl  → 小智 MCP WebSocket URL"
-echo "  plugins.entries.mydazy-mcp.config.pushttsUrl    → mydazy PushTTS Webhook URL"
+echo "  plugins.entries.mydazy-mcp.config.mcpServerUrl  → 设备页面获取的 MCP 地址"
+echo "  plugins.entries.mydazy-mcp.config.webhookUrl   → Bot 页面获取的 Webhook 地址"
 echo ""
-echo "然后重启 Gateway："
+echo "配置完成后重启 Gateway："
 echo "  openclaw gateway restart"
+echo ""
+echo "重启后可在 mydazy 小程序中查看连接状态"

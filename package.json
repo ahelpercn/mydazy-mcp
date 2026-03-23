@@ -1,6 +1,6 @@
 {
-  "name": "mydazy-mcp",
-  "version": "2026.3.13",
+  "name": "openclaw-mydazy-mcp",
+  "version": "0.3.0",
   "description": "OpenClaw plugin — connect agents to xiaozhi-esp32 voice devices via MCP relay with mydazy TTS push",
   "keywords": [
     "esp32",

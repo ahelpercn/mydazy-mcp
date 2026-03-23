@@ -1,5 +1,5 @@
 /**
- * Fires the mydazy pushtts webhook to notify a device that results are ready.
+ * Fires the mydazy webhook to notify a device that results are ready.
  *
  * Payload schema:
  *   { type: "tts", text: "小龙虾有结果了", inline_result?: string, has_queue: boolean }

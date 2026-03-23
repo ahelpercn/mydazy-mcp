@@ -71,10 +71,10 @@ const mydazyMcpPlugin = {
         const oral = buildOralSummary(text);
         const trimmed = oral.trim();
         const inlineResult = isInlineable(trimmed) ? trimmed : undefined;
-        const triggerWord = config.devices[0]?.triggerWord ?? "小龙虾有结果了";
+        const triggerWord = config.triggerWord;
 
         const result = await pushWebhook(
-          config.pushttsUrl,
+          config.webhookUrl,
           {
             type: "tts",
             text: triggerWord,

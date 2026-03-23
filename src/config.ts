@@ -2,9 +2,6 @@ import { z } from "zod";
 
 const DeviceConfigSchema = z.object({
   id: z.string().min(1),
-  webhookUrl: z.string().url(),
-  /** Trigger word pushed to device when results are ready. Must be ≤10 chars. */
-  triggerWord: z.string().min(1).max(10).default("小龙虾有结果了"),
   enabled: z.boolean().default(true),
 });
 
@@ -16,10 +13,13 @@ export const MydazyMcpConfigSchema = z.object({
   mcpServerUrl: z.string().url(),
 
   /**
-   * mydazy pushtts webhook URL.
-   * e.g. http://www.mydazy.com/ota/pushtts?token=<token>
+   * mydazy webhook URL for push notifications.
+   * Obtained from mydazy mini-program → Bot page.
    */
-  pushttsUrl: z.string().url(),
+  webhookUrl: z.string().url(),
+
+  /** Trigger word pushed to device when results are ready. Must be ≤10 chars. */
+  triggerWord: z.string().min(1).max(10).default("小龙虾有结果了"),
 
   /** Default OpenClaw agent to route tasks to */
   defaultAgent: z.string().default("main"),
@@ -49,28 +49,24 @@ export const mydazyMcpConfigSchema = {
   },
   uiHints: {
     mcpServerUrl: {
-      label: "MCP Relay URL",
-      help: "Xiaozhi hosted MCP WebSocket, e.g. wss://api.xiaozhi.me/mcp/?token=...",
+      label: "MCP 地址",
+      help: "小程序「设备」页面获取的 MCP 地址",
       sensitive: true,
     },
-    pushttsUrl: {
-      label: "PushTTS Webhook URL",
-      help: "mydazy push endpoint, e.g. http://www.mydazy.com/ota/pushtts?token=...",
+    webhookUrl: {
+      label: "Webhook 地址",
+      help: "小程序「Bot」页面获取的 Webhook 地址",
       sensitive: true,
+    },
+    triggerWord: {
+      label: "播报触发词（≤10 字）",
+      help: "任务完成后推送到设备的触发词，如 小龙虾有结果了",
     },
     defaultAgent: {
       label: "Default Agent",
       help: "OpenClaw agent ID that handles tasks without an explicit agent param.",
     },
     "devices[].id": { label: "Device ID" },
-    "devices[].webhookUrl": {
-      label: "Device Webhook URL (legacy)",
-      help: "Per-device push URL. Leave empty to use the global pushttsUrl.",
-    },
-    "devices[].triggerWord": {
-      label: "Trigger Word (≤10 chars)",
-      help: "Word TTS-spoken on device when results are ready, e.g. 小龙虾有结果了",
-    },
     taskTimeoutMs: { label: "Task Timeout (ms)", advanced: true },
     maxQueueSize: { label: "Max Queue Size per Device", advanced: true },
     reconnectDelayMs: { label: "WS Reconnect Delay (ms)", advanced: true },
