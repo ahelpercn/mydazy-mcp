@@ -136,7 +136,6 @@ tail -f /tmp/openclaw-gateway.log
 | `send_task`         | 小龙虾 + 任何指令     | 提交 Agent 任务；10 秒内完成直接返回，否则后台执行完成后推送 |
 | `get_results`       | 听到推送触发词        | 获取已完成任务结果并朗读                                     |
 | `task_status`       | 查询任务进度          | 查询指定 taskId 的状态                                       |
-| `list_agents`       | 有哪些助手            | 列出可用 Agent                                               |
 | `push_notification` | 立即播报短消息        | 不创建 Agent 任务，直接推送 TTS                              |
 | `mac_calendar`      | 今天有什么日程        | 读取 Mac 日历（默认今天）                                    |
 | `mac_event_add`     | 帮我加个会议/日程     | 在 Mac 日历中添加事件                                        |

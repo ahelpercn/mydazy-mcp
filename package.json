@@ -26,7 +26,9 @@
     "openclaw.plugin.json",
     "install.sh",
     "uninstall.sh",
-    "README.md"
+    "docs/",
+    "README.md",
+    "README.en.md"
   ],
   "bin": {
     "openclaw-mydazy-mcp": "./scripts/setup.js"

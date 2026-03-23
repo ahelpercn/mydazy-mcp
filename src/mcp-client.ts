@@ -8,11 +8,11 @@
  * Requests (with id) require a response.
  *
  * Tools exposed:
- *   send_task        – queue an agent task
- *   get_results      – drain the result queue for this session
- *   task_status      – poll a task by ID
- *   list_agents      – list available agents
+ *   send_task         – queue an agent task
+ *   get_results       – drain the result queue for this session
+ *   task_status       – poll a task by ID
  *   push_notification – immediately push a tts notification to all devices
+ *   check_service     – check if the service is online
  */
 
 import { WebSocket } from "ws";

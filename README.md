@@ -1,5 +1,7 @@
 # 🦞 mydazy-mcp
 
+[English](./README.en.md) | 中文
+
 **一句话让 AI 帮你干活，干完了自动语音汇报。**
 
 用AI搭子MyDazy说一句"小龙虾帮我查一下今天的日程"，AI 在后台执行，完成后AI搭子MyDazy自动播报结果。无需盯屏幕，无需动手，张嘴就行。
@@ -33,16 +35,13 @@ curl -fsSL https://raw.githubusercontent.com/ahelpercn/mydazy-mcp/main/install.s
 npm install openclaw-mydazy-mcp
 ```
 
-安装后只需填 **2 个地址**，打开 mydazy 小程序复制即可：
+安装后运行配置向导，按提示填入 2 个地址即可：
 
-```json
-{
-  "mcpServerUrl": "小程序 → 设备页面 → MCP 页面 → 复制 MCP 地址",
-  "webhookUrl":   "小程序 → 设备页面 → Bot 页面 → 复制 Webhook 地址"
-}
+```bash
+npx openclaw-mydazy-mcp setup
 ```
 
-重启 Gateway 就能用了：`openclaw gateway restart`
+也可以在 **OpenClaw Dashboard** 中配置插件参数。配置完成后重启 Gateway：`openclaw gateway restart`
 
 ---
 
