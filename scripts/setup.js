@@ -21,6 +21,17 @@ const DIM = "\x1b[2m";
 
 const CONFIG_FILE = join(homedir(), ".openclaw", "openclaw.json");
 
+// When called from postinstall with --auto, exit silently if not interactive
+const isAuto = process.argv.includes("--auto");
+if (isAuto && !stdin.isTTY) {
+  // Non-interactive environment (CI, piped npm install) — print hint and exit
+  process.stderr.write(
+    `\n${GREEN}${BOLD}✅ openclaw-mydazy-mcp 安装成功！${RESET}\n` +
+    `${BOLD}运行配置向导：${RESET} npx openclaw-mydazy-mcp setup\n\n`
+  );
+  process.exit(0);
+}
+
 async function main() {
   console.log(`
 ${GREEN}${BOLD}🦞 mydazy-mcp 配置向导${RESET}
