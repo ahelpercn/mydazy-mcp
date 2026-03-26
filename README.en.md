@@ -25,14 +25,15 @@ The current plugin is intentionally designed for a **single paired device**. One
 
 ## 30-Second Install
 
-**Option 1: npm + setup wizard (recommended)**
+**Option 1: npm (recommended)**
 
 ```bash
 npm install openclaw-mydazy-mcp
-npx openclaw-mydazy-mcp setup
 ```
 
-The setup wizard walks you through filling in 2 addresses — that's it.
+The setup wizard **launches automatically** after install — just fill in 2 addresses. In non-interactive environments (CI, etc.), a manual guide is printed instead.
+
+> Skipped the wizard? Run `npx openclaw-mydazy-mcp setup` anytime to configure.
 
 **Option 2: One-line script**
 
