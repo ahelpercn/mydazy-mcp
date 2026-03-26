@@ -1,8 +1,8 @@
 {
-  "id": "mydazy-mcp",
+  "id": "openclaw-mydazy-mcp",
   "name": "MyDazy MCP",
   "description": "连接 MyDazy 设备到 OpenClaw Agent — 语音下达任务，完成后自动播报",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "uiHints": {
     "mcpServerUrl": {
       "label": "MCP 地址",

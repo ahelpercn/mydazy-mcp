@@ -86,11 +86,11 @@ ${DIM}连接 MyDazy 设备到 OpenClaw Agent${RESET}
     const allow = (plugins.allow ??= []);
     const entries = (plugins.entries ??= {});
 
-    if (!allow.includes("mydazy-mcp")) {
-      allow.push("mydazy-mcp");
+    if (!allow.includes("openclaw-mydazy-mcp")) {
+      allow.push("openclaw-mydazy-mcp");
     }
 
-    entries["mydazy-mcp"] = {
+    entries["openclaw-mydazy-mcp"] = {
       enabled: true,
       config: pluginConfig,
     };

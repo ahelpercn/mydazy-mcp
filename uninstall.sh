@@ -36,20 +36,20 @@ changed = False
 
 # 移除 allow 列表中的 mydazy-mcp
 allow = plugins.get("allow", [])
-if "mydazy-mcp" in allow:
-    allow.remove("mydazy-mcp")
+if "openclaw-mydazy-mcp" in allow:
+    allow.remove("openclaw-mydazy-mcp")
     changed = True
 
 # 移除 entries
 entries = plugins.get("entries", {})
-if "mydazy-mcp" in entries:
-    del entries["mydazy-mcp"]
+if "openclaw-mydazy-mcp" in entries:
+    del entries["openclaw-mydazy-mcp"]
     changed = True
 
 # 移除 installs
 installs = plugins.get("installs", {})
-if "mydazy-mcp" in installs:
-    del installs["mydazy-mcp"]
+if "openclaw-mydazy-mcp" in installs:
+    del installs["openclaw-mydazy-mcp"]
     changed = True
 
 # 移除 load.paths 中的路径

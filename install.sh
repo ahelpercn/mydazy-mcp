@@ -51,14 +51,14 @@ paths = load.setdefault("paths", [])
 entries = plugins.setdefault("entries", {})
 installs = plugins.setdefault("installs", {})
 
-if "mydazy-mcp" not in allow:
-    allow.append("mydazy-mcp")
+if "openclaw-mydazy-mcp" not in allow:
+    allow.append("openclaw-mydazy-mcp")
 
 if plugin_dir not in paths:
     paths.append(plugin_dir)
 
-if "mydazy-mcp" not in entries:
-    entries["mydazy-mcp"] = {
+if "openclaw-mydazy-mcp" not in entries:
+    entries["openclaw-mydazy-mcp"] = {
         "enabled": False,
         "config": {
             "mcpServerUrl": "",
@@ -69,9 +69,9 @@ if "mydazy-mcp" not in entries:
 else:
     print("✅ 插件配置已存在，跳过")
 
-installs["mydazy-mcp"] = {
+installs["openclaw-mydazy-mcp"] = {
     "source": "path",
-    "spec": "mydazy-mcp",
+    "spec": "openclaw-mydazy-mcp",
     "sourcePath": plugin_dir,
     "installPath": plugin_dir
 }
