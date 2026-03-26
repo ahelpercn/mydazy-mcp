@@ -19,29 +19,31 @@ MyDazy: "Lobster has results. You have 3 unread emails, the first one is from Zh
 
 Anything an OpenClaw Agent can do, you can now trigger by voice: check calendars, send messages, search the web, write code, control Mac apps... speak and walk away, results are delivered to your ears.
 
+The current plugin is intentionally designed for a **single paired device**. One mydazy device starts the task and receives the spoken result; there is no multi-device routing.
+
 ---
 
 ## 30-Second Install
 
-**Option 1: One-line script (recommended)**
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/ahelpercn/mydazy-mcp/main/install.sh | bash
-```
-
-**Option 2: npm**
+**Option 1: npm + setup wizard (recommended)**
 
 ```bash
 npm install openclaw-mydazy-mcp
-```
-
-After installing, run the setup wizard — just fill in 2 addresses:
-
-```bash
 npx openclaw-mydazy-mcp setup
 ```
 
-You can also configure the plugin in the **OpenClaw Dashboard**. Then restart Gateway: `openclaw gateway restart`
+The setup wizard walks you through filling in 2 addresses — that's it.
+
+**Option 2: One-line script**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ahelpercn/mydazy-mcp/main/install.sh | bash
+npx openclaw-mydazy-mcp setup
+```
+
+After setup, restart Gateway: `openclaw gateway restart`
+
+> You can also configure the plugin in the **OpenClaw Dashboard**.
 
 ---
 
@@ -72,7 +74,7 @@ Voice readback ← MyDazy device ← Webhook push ← Oral summary ← Task comp
 |------|---------|
 | `send_task` | Submit a task for background AI execution |
 | `get_results` | Retrieve completed task results |
-| `task_status` | Check task progress |
+| `task_status` | Check the latest task or a specific task |
 | `push_notification` | Push an immediate voice message |
 | `check_service` | Check if the service is online |
 

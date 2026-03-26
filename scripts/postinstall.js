@@ -15,13 +15,14 @@ ${GREEN}${BOLD}✅ openclaw-mydazy-mcp 安装成功！${RESET}
 
 ${CYAN}插件默认未启用，不会影响 Gateway 运行。${RESET}
 
-${BOLD}方式一：运行配置向导（推荐）${RESET}
+${BOLD}下一步：运行配置向导（推荐）${RESET}
   npx openclaw-mydazy-mcp setup
 
-${BOLD}方式二：在 OpenClaw Dashboard 中配置${RESET}
-  打开 Dashboard → 插件 → mydazy-mcp → 填写 MCP 地址和 Webhook 地址
+${DIM}按提示填入 MCP 地址和 Webhook 地址即可完成全部配置。${RESET}
 
-${BOLD}方式三：手动编辑 openclaw.json${RESET}
+${BOLD}其他配置方式：${RESET}
+  • OpenClaw Dashboard → 插件 → mydazy-mcp
+  • 手动编辑 openclaw.json：${RESET}
   ${YELLOW}{
     "plugins": {
       "entries": {

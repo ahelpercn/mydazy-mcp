@@ -9,9 +9,9 @@
  *
  * Tools exposed:
  *   send_task         – queue an agent task
- *   get_results       – drain the result queue for this session
- *   task_status       – poll a task by ID
- *   push_notification – immediately push a tts notification to all devices
+ *   get_results       – drain the result queue for the paired device
+ *   task_status       – poll the latest task or a specific task by ID
+ *   push_notification – immediately push a tts notification to the paired device
  *   check_service     – check if the service is online
  */
 
@@ -75,19 +75,18 @@ const MCP_TOOLS = [
   {
     name: "task_status",
     description:
-      "查询指定任务的当前执行状态（pending/running/done/error）。用户询问任务做到哪了时调用。",
+      "查询最近一条任务，或指定任务的当前执行状态（pending/running/done/error）。用户询问任务做到哪了时调用。",
     inputSchema: {
       type: "object",
-      required: ["task_id"],
       properties: {
-        task_id: { type: "string", description: "send_task 返回的 taskId" },
+        task_id: { type: "string", description: "可选。send_task 返回的 taskId；不传时默认查询最近任务" },
       },
     },
   },
   {
     name: "push_notification",
     description:
-      "立即向设备推送一条 TTS 消息（不创建 agent 任务）。文本 ≤10 字将直接朗读；适合发送简短提醒。",
+      "立即向当前配对设备推送一条 TTS 消息（不创建 agent 任务）。文本 ≤10 字将直接朗读；适合发送简短提醒。",
     inputSchema: {
       type: "object",
       required: ["text"],
@@ -372,13 +371,14 @@ export class McpClient {
     // Always route through defaultAgent ("main"); let OpenClaw dispatch internally.
     const agent = this.config.defaultAgent;
 
-    // Normalise empty sessionId → "broadcast" so slot keys stay consistent
-    // with toolGetResults() which also uses || "broadcast".
-    const task = this.queue.create({ agent, prompt, sourceDevice: this.sessionId || "broadcast" });
+    const task = this.queue.create({ agent, prompt });
     const triggerWord = this.config.triggerWord;
 
     // Acknowledge receipt immediately; task runs in background.
-    this.sendToolText(id, `好的，小龙虾收到了 ✅\n任务正在后台执行，有结果会通知你。`);
+    this.sendToolText(
+      id,
+      "好的，小龙虾收到了 ✅\n任务正在后台执行，有结果会通知你。",
+    );
 
     // Fire-and-forget: push notification only when task produces a real result.
     runTask({
@@ -399,8 +399,7 @@ export class McpClient {
 
   private toolGetResults(id: string | number, args: Record<string, unknown>): void {
     const limit = typeof args.limit === "number" ? Math.min(args.limit, 20) : 5;
-    const deviceId = this.sessionId || "broadcast";
-    const entries = this.queue.consumeForDevice(deviceId, limit);
+    const entries = this.queue.consume(limit);
 
     if (entries.length === 0) {
       this.sendToolText(id, "暂时没有新的结果，稍后再试。");
@@ -422,13 +421,9 @@ export class McpClient {
 
   private toolTaskStatus(id: string | number, args: Record<string, unknown>): void {
     const taskId = typeof args.task_id === "string" ? args.task_id : "";
-    if (!taskId) {
-      this.sendToolError(id, "task_id is required");
-      return;
-    }
-    const task = this.queue.get(taskId);
+    const task = taskId ? this.queue.get(taskId) : this.queue.getLatest();
     if (!task) {
-      this.sendToolText(id, `任务 ${taskId} 未找到。`);
+      this.sendToolText(id, taskId ? `任务 ${taskId} 未找到。` : "当前还没有任务记录。");
       return;
     }
     const statusEmoji: Record<string, string> = {
@@ -465,6 +460,10 @@ export class McpClient {
     const trimmed = oral.trim();
     const isShort = trimmed.length <= 8;
 
+    if (!isShort) {
+      this.queue.enqueueNotification(oral);
+    }
+
     const result = await pushWebhook(
       this.config.webhookUrl,
       {
@@ -492,8 +491,8 @@ export class McpClient {
       id,
       `✅ 小龙虾服务已开通，当前${statusLabel}。\n` +
         `可用工具（${MCP_TOOLS.length} 个）：${toolNames}。\n` +
-        `默认 agent：${this.config.defaultAgent}，` +
-        `设备数：${this.config.devices.length}。`,
+        `默认 agent：${this.config.defaultAgent}。\n` +
+        `当前模式：单设备闭环。`,
     );
   }
 

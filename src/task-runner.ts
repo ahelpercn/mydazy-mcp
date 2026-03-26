@@ -1,9 +1,12 @@
 /**
  * Runs an OpenClaw agent task via the stable CLI interface.
  *
- * Uses `openclaw message send --agent <id> --local "<prompt>"` to invoke agents.
+ * Uses `openclaw agent --agent <id> --local --message "<prompt>"` to invoke agents.
  * This approach is version-agnostic: works with any OpenClaw ≥ 2026.1 installation
  * without depending on internal extensionAPI.js paths.
+ *
+ * Each voice task uses its own explicit session id so it does not contend with
+ * the user's main chat session or concurrent gateway activity.
  *
  * Includes push deduplication: when multiple tasks complete within a short window,
  * only one webhook push is sent. The device will pull all pending results at once
@@ -11,6 +14,7 @@
  */
 
 import { exec } from "node:child_process";
+import { existsSync } from "node:fs";
 import { promisify } from "node:util";
 import { buildOralSummary, isInlineable } from "./result-narrator";
 import type { TaskQueue } from "./task-queue";
@@ -40,6 +44,10 @@ function shellEscape(str: string): string {
   return "'" + str.replace(/'/g, "'\\''") + "'";
 }
 
+function buildTaskSessionId(taskId: string): string {
+  return `mydazy-task-${taskId}`;
+}
+
 /**
  * Resolve the openclaw binary path.
  * Checks OPENCLAW_BIN env first, then common install locations.
@@ -52,10 +60,11 @@ function resolveOpenClawBin(): string {
     "/usr/local/bin/openclaw",
     `${process.env.HOME}/.npm-global/bin/openclaw`,
     `${process.env.HOME}/Library/pnpm/openclaw`,
-    "openclaw", // fallback: rely on PATH
   ];
-  // Return first existing path (simple stat check avoided for startup speed)
-  return candidates[0]; // openclaw gateway already ran us, so Homebrew path is correct on Mac
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return candidate;
+  }
+  return "openclaw";
 }
 
 // ---------------------------------------------------------------------------
@@ -117,13 +126,14 @@ export async function runTask(opts: RunTaskOptions): Promise<void> {
   try {
     const bin = resolveOpenClawBin();
     const escapedPrompt = shellEscape(prompt);
+    const sessionId = buildTaskSessionId(taskId);
 
-    // `openclaw message send --agent <id> --local` runs the agent in-process
-    // and writes the final reply to stdout. Stable across OpenClaw versions.
-    const cmd = `${bin} message send --agent ${shellEscape(agent)} --local ${escapedPrompt}`;
+    // `openclaw agent --local` executes a single embedded agent turn
+    // and writes the final reply to stdout.
+    const cmd = `${bin} agent --agent ${shellEscape(agent)} --session-id ${shellEscape(sessionId)} --local --message ${escapedPrompt}`;
 
-    logger.info(`[mydazy-mcp] running: openclaw message send --agent ${agent}`);
-    queue.appendProgress(taskId, `调用 agent: ${agent}`);
+    logger.info(`[mydazy-mcp] running: openclaw agent --agent ${agent}`);
+    queue.appendProgress(taskId, `调用 agent: ${agent} (session=${sessionId})`);
 
     const { stdout, stderr } = await execAsync(cmd, {
       timeout: timeoutMs,
@@ -172,5 +182,14 @@ export async function runTask(opts: RunTaskOptions): Promise<void> {
     const msg = err instanceof Error ? err.message : String(err);
     queue.markError(taskId, msg);
     logger.error(`[mydazy-mcp] task ${taskId} error: ${msg}`);
+    await pushWebhook(
+      webhookUrl,
+      {
+        type: "tts",
+        text: "任务失败了",
+        has_queue: false,
+      },
+      logger,
+    ).catch(() => {});
   }
 }

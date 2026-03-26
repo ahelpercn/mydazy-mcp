@@ -1,10 +1,5 @@
 import { z } from "zod";
 
-const DeviceConfigSchema = z.object({
-  id: z.string().min(1),
-  enabled: z.boolean().default(true),
-});
-
 export const MydazyMcpConfigSchema = z.object({
   /**
    * Xiaozhi hosted MCP relay WebSocket URL.
@@ -24,10 +19,7 @@ export const MydazyMcpConfigSchema = z.object({
   /** Default OpenClaw agent to route tasks to */
   defaultAgent: z.string().default("main"),
 
-  /** Registered xiaozhi / MCP-capable devices */
-  devices: z.array(DeviceConfigSchema).default([]),
-
-  /** Max queued result entries per device before old ones are dropped */
+  /** Max queued result entries before old ones are dropped */
   maxQueueSize: z.number().int().min(1).max(200).default(50),
 
   /** Timeout for agent task execution in milliseconds */
@@ -66,9 +58,8 @@ export const mydazyMcpConfigSchema = {
       label: "Default Agent",
       help: "OpenClaw agent ID that handles tasks without an explicit agent param.",
     },
-    "devices[].id": { label: "Device ID" },
     taskTimeoutMs: { label: "Task Timeout (ms)", advanced: true },
-    maxQueueSize: { label: "Max Queue Size per Device", advanced: true },
+    maxQueueSize: { label: "Max Queue Size", advanced: true },
     reconnectDelayMs: { label: "WS Reconnect Delay (ms)", advanced: true },
   },
 };

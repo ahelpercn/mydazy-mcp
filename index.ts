@@ -97,6 +97,9 @@ const mydazyMcpPlugin = {
         const trimmed = oral.trim();
         const inlineResult = isInlineable(trimmed) ? trimmed : undefined;
         const triggerWord = config.triggerWord;
+        if (!inlineResult) {
+          ensureRuntime().client.getQueue().enqueueNotification(oral);
+        }
 
         const result = await pushWebhook(
           config.webhookUrl,
@@ -131,8 +134,7 @@ const mydazyMcpPlugin = {
             const task = queue.get(taskId);
             respond(true, task ?? { found: false });
           } else {
-            const deviceId = typeof params?.deviceId === "string" ? params.deviceId : "broadcast";
-            respond(true, { hasPending: queue.hasPending(deviceId) });
+            respond(true, { hasPending: queue.hasPending() });
           }
         } catch (err) {
           respond(false, { error: err instanceof Error ? err.message : String(err) });

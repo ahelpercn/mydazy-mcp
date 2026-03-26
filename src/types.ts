@@ -16,8 +16,6 @@ export type Task = {
   createdAt: number;
   startedAt?: number;
   doneAt?: number;
-  /** Which device originated this task (for routing result back) */
-  sourceDevice?: string;
   errorMessage?: string;
 };
 
@@ -31,7 +29,7 @@ export type QueueEntry = {
   enqueuedAt: number;
 };
 
-/** Shape of the webhook body sent to xiaozhi devices */
+/** Shape of the webhook body sent to the paired mydazy device */
 export type DeviceWebhookPayload = {
   type: "tts";
   /** ≤10 chars trigger word, e.g. "小龙虾有结果了" */
@@ -40,9 +38,4 @@ export type DeviceWebhookPayload = {
   inline_result?: string;
   /** true = device should call MCP get_results to fetch full oral summary */
   has_queue: boolean;
-};
-
-export type DeviceConfig = {
-  id: string;
-  enabled: boolean;
 };

@@ -5,19 +5,19 @@ import type { QueueEntry, Task, TaskStatus } from "./types";
 type DoneCallback = (task: Task) => void;
 
 /**
- * In-memory task queue with per-device result slots.
+ * In-memory task queue for the single paired device.
  *
  * Lifecycle:
  *   create() → task is "pending"
  *   markRunning() → task is "running", progress lines are appended
- *   markDone() → task is "done", oralSummary is stored, result pushed to device slot
- *   consumeForDevice() → device pulls entries, slots are cleared
+ *   markDone() → task is "done", oralSummary is stored, result enters the queue
+ *   consume() → the paired device pulls entries, consumed items are removed
  */
 export class TaskQueue {
   private tasks = new Map<string, Task>();
-  /** deviceId → pending QueueEntry[] (including "broadcast" key for all devices) */
-  private deviceSlots = new Map<string, QueueEntry[]>();
+  private pendingEntries: QueueEntry[] = [];
   private doneCallbacks: DoneCallback[] = [];
+  private latestTaskId: string | null = null;
   private maxSize: number;
 
   constructor(private config: MydazyMcpConfig) {
@@ -28,7 +28,7 @@ export class TaskQueue {
   // Task lifecycle
   // ---------------------------------------------------------------------------
 
-  create(opts: { agent: string; prompt: string; sourceDevice?: string }): Task {
+  create(opts: { agent: string; prompt: string }): Task {
     const task: Task = {
       id: randomUUID(),
       agent: opts.agent,
@@ -36,9 +36,9 @@ export class TaskQueue {
       status: "pending",
       progress: [],
       createdAt: Date.now(),
-      sourceDevice: opts.sourceDevice,
     };
     this.tasks.set(task.id, task);
+    this.latestTaskId = task.id;
     return task;
   }
 
@@ -58,7 +58,7 @@ export class TaskQueue {
     }
   }
 
-  markDone(taskId: string, result: string, oralSummary: string, targetDevice?: string): void {
+  markDone(taskId: string, result: string, oralSummary: string): void {
     const task = this.tasks.get(taskId);
     if (!task) return;
 
@@ -79,11 +79,7 @@ export class TaskQueue {
       enqueuedAt: Date.now(),
     };
 
-    // Route to originating device or broadcast to all.
-    // Use || (not ??) so empty string also falls back to "broadcast",
-    // keeping slot keys consistent with toolGetResults() which uses || too.
-    const slotKey = targetDevice || task.sourceDevice || "broadcast";
-    this.pushToSlot(slotKey, entry);
+    this.pushToQueue(entry);
 
     for (const cb of this.doneCallbacks) {
       try {
@@ -92,6 +88,18 @@ export class TaskQueue {
         // callbacks must not throw
       }
     }
+  }
+
+  enqueueNotification(oralText: string): void {
+    const trimmed = oralText.trim();
+    const inlineResult = trimmed.length <= 8 ? trimmed : undefined;
+    this.pushToQueue({
+      taskId: `notification:${randomUUID()}`,
+      oralText,
+      inlineResult,
+      priority: "normal",
+      enqueuedAt: Date.now(),
+    });
   }
 
   markError(taskId: string, message: string): void {
@@ -106,25 +114,15 @@ export class TaskQueue {
   // Device consumption
   // ---------------------------------------------------------------------------
 
-  /** Called when device sends get_results — drains its slot + broadcast slot */
-  consumeForDevice(deviceId: string, limit = 5): QueueEntry[] {
-    const own = this.deviceSlots.get(deviceId) ?? [];
-    const bc = this.deviceSlots.get("broadcast") ?? [];
-
-    const merged = [...bc, ...own].sort((a, b) => a.enqueuedAt - b.enqueuedAt).slice(0, limit);
-
-    // Clear consumed slots
-    this.deviceSlots.set(deviceId, []);
-    this.deviceSlots.set("broadcast", []);
-
-    return merged;
+  /** Called when the paired device sends get_results */
+  consume(limit = 5): QueueEntry[] {
+    const entries = this.pendingEntries.slice(0, limit);
+    this.pendingEntries = this.pendingEntries.slice(entries.length);
+    return entries;
   }
 
-  /** Returns true if there are pending entries for this device */
-  hasPending(deviceId: string): boolean {
-    const own = this.deviceSlots.get(deviceId)?.length ?? 0;
-    const bc = this.deviceSlots.get("broadcast")?.length ?? 0;
-    return own + bc > 0;
+  hasPending(): boolean {
+    return this.pendingEntries.length > 0;
   }
 
   // ---------------------------------------------------------------------------
@@ -133,6 +131,10 @@ export class TaskQueue {
 
   get(taskId: string): Task | undefined {
     return this.tasks.get(taskId);
+  }
+
+  getLatest(): Task | undefined {
+    return this.latestTaskId ? this.tasks.get(this.latestTaskId) : undefined;
   }
 
   getStatus(taskId: string): TaskStatus | "not_found" {
@@ -148,13 +150,10 @@ export class TaskQueue {
   // Internal
   // ---------------------------------------------------------------------------
 
-  private pushToSlot(slotKey: string, entry: QueueEntry): void {
-    const slot = this.deviceSlots.get(slotKey) ?? [];
-    // Drop oldest if over limit
-    while (slot.length >= this.maxSize) {
-      slot.shift();
+  private pushToQueue(entry: QueueEntry): void {
+    while (this.pendingEntries.length >= this.maxSize) {
+      this.pendingEntries.shift();
     }
-    slot.push(entry);
-    this.deviceSlots.set(slotKey, slot);
+    this.pendingEntries.push(entry);
   }
 }
