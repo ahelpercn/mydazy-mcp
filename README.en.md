@@ -23,27 +23,45 @@ The current plugin is intentionally designed for a **single paired device**. One
 
 ---
 
-## 30-Second Install
+## 30-Second Setup
 
-**Option 1: npm (recommended)**
+### Step 1: Install
 
 ```bash
-npm install openclaw-mydazy-mcp
+npm install -g openclaw-mydazy-mcp
 ```
 
-The setup wizard **launches automatically** after install — just fill in 2 addresses. In non-interactive environments (CI, etc.), a manual guide is printed instead.
-
-> Skipped the wizard? Run `npx openclaw-mydazy-mcp setup` anytime to configure.
-
-**Option 2: One-line script**
+### Step 2: Configure
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ahelpercn/mydazy-mcp/main/install.sh | bash
-npx openclaw-mydazy-mcp setup
+openclaw-mydazy-mcp setup
+```
+
+Fill in 3 parameters when prompted:
+
+```
+🦞 mydazy-mcp Setup Wizard
+
+Step 1/3 — MCP URL
+  Open mydazy mini-program → Devices page → Copy MCP URL
+MCP URL (wss://...): wss://api.xiaozhi.me/mcp/?token=...
+
+Step 2/3 — Webhook URL
+  Open mydazy mini-program → Bot page → Copy Webhook URL
+Webhook URL (https://...): https://www.mydazy.cn/v1/ota/pushtts?token=...
+
+Step 3/3 — Default Agent (optional)
+  OpenClaw Agent ID for task execution, defaults to "main"
+Agent ID [main]:
+
+✅ Setup complete!
 ```
 
 After setup, restart Gateway: `openclaw gateway restart`
 
+> Check config status: `openclaw-mydazy-mcp status`
+> Check runtime status: `openclaw plugins info openclaw-mydazy-mcp`
+> Reconfigure: `openclaw-mydazy-mcp setup`
 > You can also configure the plugin in the **OpenClaw Dashboard**.
 
 ---
@@ -89,8 +107,7 @@ Only 2 fields are required — everything else has sensible defaults:
 |-------|----------|---------|-------------|
 | `mcpServerUrl` | Yes | — | From mydazy mini-program → Devices page |
 | `webhookUrl` | Yes | — | From mydazy mini-program → Bot page |
-| `triggerWord` | | `"小龙虾有结果了"` | Trigger phrase for result notification (max 10 chars) |
-| `defaultAgent` | | `"main"` | Default Agent ID |
+| `defaultAgent` | | `"main"` | OpenClaw Agent ID for task execution |
 | `taskTimeoutMs` | | `120000` | Task timeout in milliseconds |
 
 ---

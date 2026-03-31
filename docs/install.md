@@ -24,16 +24,25 @@
 
 ---
 
-## 第一步：克隆并安装
+## 第一步：安装插件
+
+**方式一：npm 全局安装（推荐）**
 
 ```bash
-git clone https://github.com/ahelpercn/openclaw.git
-cd openclaw
-pnpm install
+npm install -g openclaw-mydazy-mcp
 ```
 
-> **提示**：如果你已有 OpenClaw 仓库，只需将 `extensions/mydazy-mcp` 目录复制到你的 `extensions/` 下，
-> 并在根 `package.json` 的 workspaces 中加入该路径，然后重新 `pnpm install`。
+安装后自动启动配置向导，按提示填入 3 个参数即可（MCP 地址、Webhook 地址、默认 Agent）。
+
+> 跳过了向导？运行 `openclaw-mydazy-mcp setup` 重新配置。
+> 查看当前状态：`openclaw-mydazy-mcp status`
+
+**方式二：一键脚本**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ahelpercn/mydazy-mcp/main/install.sh | bash
+openclaw-mydazy-mcp setup
+```
 
 ---
 
@@ -54,42 +63,37 @@ pnpm install
 
 ## 第三步：配置 OpenClaw
 
-编辑 `~/.openclaw/openclaw.json`，在 `plugins` 字段中加入以下内容：
+如果使用 npm 全局安装并完成了配置向导，此步骤已自动完成。
+
+手动配置：编辑 `~/.openclaw/openclaw.json`，在 `plugins` 字段中加入以下内容：
 
 ```jsonc
 {
   "plugins": {
     "allow": [
       // ... 其他已有插件
-      "mydazy-mcp",
+      "openclaw-mydazy-mcp"
     ],
     "entries": {
-      "mydazy-mcp": {
+      "openclaw-mydazy-mcp": {
         "enabled": true,
         "config": {
           // 小程序「设备」页面获取的 MCP 地址（第 2.1 步复制）
-          "mcpServerUrl": "登录mydazy小程序 → 设备页面 → 获取MCP地址",
+          "mcpServerUrl": "wss://api.xiaozhi.me/mcp/?token=YOUR_TOKEN",
 
           // 小程序「Bot」页面获取的 Webhook 地址（第 2.2 步复制）
-          "webhookUrl": "登录mydazy小程序 → Bot页面 → 获取Webhook地址",
+          "webhookUrl": "https://www.mydazy.cn/v1/ota/pushtts?token=YOUR_TOKEN"
 
-          // 以下为可选配置，有默认值，可省略
-          // "triggerWord": "小龙虾有结果了",  // 播报触发词，可自定义（≤10 字）
-          // "defaultAgent": "main",            // 默认调用的 Agent
-        },
-      },
-    },
-    "load": {
-      "paths": [
-        // 指向你克隆后的 mydazy-mcp 目录（绝对路径）
-        "/path/to/openclaw/extensions/mydazy-mcp",
-      ],
-    },
-  },
+          // 可选：默认调用的 Agent（默认 "main"）
+          // "defaultAgent": "main"
+        }
+      }
+    }
+  }
 }
 ```
 
-> **注意**：`plugins.load.paths` 需要改为你机器上的实际路径。
+> **提示**：npm 全局安装后，OpenClaw 会自动发现插件，无需配置 `plugins.load.paths`。
 
 ---
 
@@ -166,7 +170,7 @@ tail -f /tmp/openclaw-gateway.log
 
 ### 任务超过 10 秒没有推送通知
 
-检查 `triggerWord` 与设备系统提示词中配置的触发词是否一致。
+确保设备系统提示词中的触发词与插件内置的"小龙虾有结果了"一致。
 日志中搜索 `webhook pushed` 确认推送是否成功发出。
 
 ---
@@ -174,20 +178,22 @@ tail -f /tmp/openclaw-gateway.log
 ## 项目结构
 
 ```
-extensions/mydazy-mcp/
+mydazy-mcp/
 ├── src/
 │   ├── mcp-client.ts       # WebSocket MCP 客户端 + 工具处理
-│   ├── mac-tools.ts        # macOS 原生控制（日历、浏览器、启动器）
 │   ├── task-runner.ts      # Agent 任务执行
 │   ├── task-queue.ts       # 任务队列管理
 │   ├── result-narrator.ts  # 口播摘要生成
 │   ├── webhook-pusher.ts   # mydazy PushTTS 推送
 │   ├── config.ts           # 配置 Schema（Zod）
-│   └── core-bridge.ts      # OpenClaw core 动态加载
+│   └── types.ts            # 类型定义
+├── scripts/
+│   ├── setup.js            # CLI 配置向导 + 状态查看
+│   └── postinstall.js      # npm 安装后自动启动向导
 ├── docs/
 │   ├── install.md          # 本文件
-│   └── device-setup.md         # MyDazy 设备配置指南
-├── index.ts                # OpenClaw 插件注册入口（根目录）
+│   └── device-setup.md     # MyDazy 设备配置指南
+├── index.ts                # OpenClaw 插件注册入口
 ├── openclaw.plugin.json    # 插件元数据
 └── package.json
 ```
@@ -197,9 +203,12 @@ extensions/mydazy-mcp/
 ## 开发 / 贡献
 
 ```bash
-# 修改代码后直接重启 gateway 即可（jiti 运行时编译，无需手动 build）
-pkill -f "openclaw.*gateway"
-nohup pnpm openclaw gateway run > /tmp/openclaw-gateway.log 2>&1 &
+# 本地开发：克隆仓库后在 openclaw.json 中添加 load.paths 指向本地目录
+git clone https://github.com/ahelpercn/mydazy-mcp.git
+cd mydazy-mcp && npm install
+
+# 修改代码后重启 gateway 即可
+openclaw gateway restart
 ```
 
-代码仓库：<https://github.com/ahelpercn/openclaw>（`extensions/mydazy-mcp`）
+代码仓库：<https://github.com/ahelpercn/mydazy-mcp>
