@@ -13,8 +13,9 @@ export const MydazyMcpConfigSchema = z.object({
    */
   webhookUrl: z.string().url(),
 
-  /** Trigger word pushed to device when results are ready. Must be ≤10 chars. */
-  triggerWord: z.string().min(1).max(10).default("小龙虾有结果了"),
+  // TODO: 暂时禁用自定义触发词，硬编码默认值，后续重新开放
+  // triggerWord: z.string().min(1).max(10).default("小龙虾有结果了"),
+  triggerWord: z.literal("小龙虾有结果了").default("小龙虾有结果了"),
 
   /** Default OpenClaw agent to route tasks to */
   defaultAgent: z.string().default("main"),
@@ -50,13 +51,10 @@ export const mydazyMcpConfigSchema = {
       help: "小程序「Bot」页面获取的 Webhook 地址",
       sensitive: true,
     },
-    triggerWord: {
-      label: "播报触发词（≤10 字）",
-      help: "任务完成后推送到设备的触发词，如 小龙虾有结果了",
-    },
+    // triggerWord: 暂时禁用，硬编码默认值
     defaultAgent: {
-      label: "Default Agent",
-      help: "OpenClaw agent ID that handles tasks without an explicit agent param.",
+      label: "默认 Agent",
+      help: "执行任务的 OpenClaw Agent ID，留空使用 main",
     },
     taskTimeoutMs: { label: "Task Timeout (ms)", advanced: true },
     maxQueueSize: { label: "Max Queue Size", advanced: true },

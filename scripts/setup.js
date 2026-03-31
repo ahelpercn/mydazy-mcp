@@ -1,8 +1,19 @@
 #!/usr/bin/env node
 
 /**
- * Interactive CLI setup for mydazy-mcp plugin.
- * Usage: npx openclaw-mydazy-mcp setup
+ * CLI entry point for mydazy-mcp plugin.
+ *
+ * - No args / "setup": run interactive setup wizard
+ * - "status": show current config status
+ *
+ * When run without args, auto-detects if plugin is configured.
+ * If not configured → launches setup wizard.
+ * If already configured → shows status and how to reconfigure.
+ *
+ * Usage:
+ *   openclaw-mydazy-mcp          # auto-detect: setup or status
+ *   openclaw-mydazy-mcp setup    # force setup wizard
+ *   openclaw-mydazy-mcp status   # show current config
  */
 
 import { createInterface } from "node:readline/promises";
@@ -20,19 +31,67 @@ const BOLD = "\x1b[1m";
 const DIM = "\x1b[2m";
 
 const CONFIG_FILE = join(homedir(), ".openclaw", "openclaw.json");
+const PLUGIN_ID = "openclaw-mydazy-mcp";
 
-// When called from postinstall with --auto, exit silently if not interactive
-const isAuto = process.argv.includes("--auto");
-if (isAuto && !stdin.isTTY) {
-  // Non-interactive environment (CI, piped npm install) — print hint and exit
-  process.stderr.write(
-    `\n${GREEN}${BOLD}✅ openclaw-mydazy-mcp 安装成功！${RESET}\n` +
-    `${BOLD}运行配置向导：${RESET} npx openclaw-mydazy-mcp setup\n\n`
-  );
-  process.exit(0);
+// ---------------------------------------------------------------------------
+// Config helpers
+// ---------------------------------------------------------------------------
+
+async function loadConfig() {
+  try {
+    const raw = await readFile(CONFIG_FILE, "utf-8");
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 }
 
-async function main() {
+function getPluginConfig(data) {
+  return data?.plugins?.entries?.[PLUGIN_ID]?.config ?? null;
+}
+
+function isConfigured(cfg) {
+  return cfg && cfg.mcpServerUrl && cfg.webhookUrl;
+}
+
+// ---------------------------------------------------------------------------
+// Status
+// ---------------------------------------------------------------------------
+
+function showStatus(data) {
+  const cfg = getPluginConfig(data);
+  const entry = data?.plugins?.entries?.[PLUGIN_ID];
+
+  console.log(`\n${GREEN}${BOLD}🦞 mydazy-mcp 插件状态${RESET}\n`);
+
+  if (!cfg || !isConfigured(cfg)) {
+    console.log(`${RED}${BOLD}未配置${RESET} — 请运行 ${CYAN}openclaw-mydazy-mcp setup${RESET} 完成配置\n`);
+    return;
+  }
+
+  const enabled = entry?.enabled ? `${GREEN}已启用${RESET}` : `${YELLOW}未启用${RESET}`;
+  const mcpUrl = cfg.mcpServerUrl.length > 50
+    ? cfg.mcpServerUrl.slice(0, 50) + "..."
+    : cfg.mcpServerUrl;
+  const webhookUrl = cfg.webhookUrl.length > 50
+    ? cfg.webhookUrl.slice(0, 50) + "..."
+    : cfg.webhookUrl;
+
+  console.log(`${BOLD}状态：${RESET}    ${enabled}`);
+  console.log(`${BOLD}MCP 地址：${RESET} ${DIM}${mcpUrl}${RESET}`);
+  console.log(`${BOLD}Webhook：${RESET}  ${DIM}${webhookUrl}${RESET}`);
+  if (cfg.triggerWord) {
+    console.log(`${BOLD}触发词：${RESET}  ${cfg.triggerWord}`);
+  }
+  console.log(`\n${DIM}重新配置：openclaw-mydazy-mcp setup${RESET}`);
+  console.log(`${DIM}配置文件：${CONFIG_FILE}${RESET}\n`);
+}
+
+// ---------------------------------------------------------------------------
+// Setup wizard
+// ---------------------------------------------------------------------------
+
+async function runSetup() {
   console.log(`
 ${GREEN}${BOLD}🦞 mydazy-mcp 配置向导${RESET}
 ${DIM}连接 MyDazy 设备到 OpenClaw Agent${RESET}
@@ -59,25 +118,18 @@ ${DIM}连接 MyDazy 设备到 OpenClaw Agent${RESET}
         : "请输入有效的 HTTP 地址 (https://...)",
     );
 
-    // Step 3: Optional trigger word
-    console.log(`\n${CYAN}Step 3/3${RESET} — 播报触发词 ${DIM}(可选)${RESET}`);
-    console.log(`${DIM}任务完成后推送到设备的触发词，默认"小龙虾有结果了"${RESET}`);
-    const triggerWordInput = (await rl.question("触发词 [小龙虾有结果了]: ")).trim();
-    const triggerWord = triggerWordInput || undefined;
-
-    if (triggerWord && triggerWord.length > 10) {
-      console.log(`${YELLOW}⚠️  触发词不能超过 10 个字，将使用默认值${RESET}`);
-    }
+    // Step 3: Default Agent (optional)
+    console.log(`\n${CYAN}Step 3/3${RESET} — 默认 Agent ${DIM}(可选)${RESET}`);
+    console.log(`${DIM}执行任务的 OpenClaw Agent ID，默认 "main"${RESET}`);
+    const defaultAgentInput = (await rl.question("Agent ID [main]: ")).trim();
+    const defaultAgent = defaultAgentInput || undefined;
 
     rl.close();
 
     // Build config
-    const pluginConfig = {
-      mcpServerUrl,
-      webhookUrl,
-    };
-    if (triggerWord && triggerWord.length <= 10) {
-      pluginConfig.triggerWord = triggerWord;
+    const pluginConfig = { mcpServerUrl, webhookUrl };
+    if (defaultAgent) {
+      pluginConfig.defaultAgent = defaultAgent;
     }
 
     // Write to openclaw.json
@@ -88,7 +140,6 @@ ${DIM}连接 MyDazy 设备到 OpenClaw Agent${RESET}
       const raw = await readFile(CONFIG_FILE, "utf-8");
       data = JSON.parse(raw);
     } catch {
-      // Config file doesn't exist yet — create structure
       await mkdir(join(homedir(), ".openclaw"), { recursive: true });
       data = {};
     }
@@ -97,11 +148,11 @@ ${DIM}连接 MyDazy 设备到 OpenClaw Agent${RESET}
     const allow = (plugins.allow ??= []);
     const entries = (plugins.entries ??= {});
 
-    if (!allow.includes("openclaw-mydazy-mcp")) {
-      allow.push("openclaw-mydazy-mcp");
+    if (!allow.includes(PLUGIN_ID)) {
+      allow.push(PLUGIN_ID);
     }
 
-    entries["openclaw-mydazy-mcp"] = {
+    entries[PLUGIN_ID] = {
       enabled: true,
       config: pluginConfig,
     };
@@ -113,7 +164,7 @@ ${GREEN}${BOLD}✅ 配置完成！${RESET}
 
 ${BOLD}已写入：${RESET} ${DIM}${CONFIG_FILE}${RESET}
 ${BOLD}MCP 地址：${RESET} ${mcpServerUrl}
-${BOLD}Webhook：${RESET} ${webhookUrl}${triggerWord ? `\n${BOLD}触发词：${RESET} ${triggerWord}` : ""}
+${BOLD}Webhook：${RESET} ${webhookUrl}${defaultAgent ? `\n${BOLD}Agent：${RESET}   ${defaultAgent}` : ""}
 ${BOLD}已启用：${RESET} ${GREEN}是${RESET}
 
 ${CYAN}重启 Gateway 使配置生效：${RESET}
@@ -145,4 +196,23 @@ async function askRequired(rl, prompt, validate) {
   }
 }
 
-main();
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+const cmd = process.argv[2];
+const data = await loadConfig();
+
+if (cmd === "setup") {
+  await runSetup();
+} else if (cmd === "status") {
+  showStatus(data);
+} else {
+  // Auto-detect: no config → setup, has config → status
+  if (isConfigured(getPluginConfig(data))) {
+    showStatus(data);
+  } else {
+    console.log(`${YELLOW}${BOLD}检测到插件尚未配置，启动配置向导...${RESET}\n`);
+    await runSetup();
+  }
+}

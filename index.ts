@@ -12,7 +12,7 @@ type MydazyRuntime = {
 };
 
 const mydazyMcpPlugin = {
-  id: "mydazy-mcp",
+  id: "openclaw-mydazy-mcp",
   name: "MyDazy MCP",
   description:
     "Connect OpenClaw agents to MyDazy devices via MCP relay with TTS push notifications.",
@@ -62,7 +62,7 @@ const mydazyMcpPlugin = {
     // Service: manage WS connection lifecycle
     // ------------------------------------------------------------------
     api.registerService({
-      id: "mydazy-mcp",
+      id: "openclaw-mydazy-mcp",
       start: async () => {
         try {
           const rt = ensureRuntime();

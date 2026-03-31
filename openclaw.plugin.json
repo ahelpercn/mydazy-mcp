@@ -2,7 +2,7 @@
   "id": "openclaw-mydazy-mcp",
   "name": "MyDazy MCP",
   "description": "连接 MyDazy 设备到 OpenClaw Agent — 语音下达任务，完成后自动播报",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "uiHints": {
     "mcpServerUrl": {
       "label": "MCP 地址",
@@ -18,14 +18,9 @@
       "sensitive": true,
       "required": true
     },
-    "triggerWord": {
-      "label": "播报触发词",
-      "help": "任务完成后推送到设备的触发词，最多 10 个字",
-      "placeholder": "小龙虾有结果了"
-    },
     "defaultAgent": {
       "label": "默认 Agent",
-      "help": "执行任务的 OpenClaw Agent ID",
+      "help": "执行任务的 OpenClaw Agent ID，留空使用 main",
       "placeholder": "main"
     },
     "taskTimeoutMs": {
@@ -57,16 +52,10 @@
         "type": "string",
         "description": "Webhook 推送地址 (从 mydazy 小程序获取)"
       },
-      "triggerWord": {
-        "type": "string",
-        "maxLength": 10,
-        "default": "小龙虾有结果了",
-        "description": "播报触发词"
-      },
       "defaultAgent": {
         "type": "string",
         "default": "main",
-        "description": "默认 Agent ID"
+        "description": "执行任务的 OpenClaw Agent ID"
       },
       "maxQueueSize": {
         "type": "integer",
