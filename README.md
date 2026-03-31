@@ -120,11 +120,13 @@ Agent ID [main]:
 curl -fsSL https://raw.githubusercontent.com/ahelpercn/mydazy-mcp/main/uninstall.sh | bash
 ```
 
-**npm 安装的卸载**：
+**npm 全局卸载**：
 
 ```bash
-npm uninstall openclaw-mydazy-mcp
+npm uninstall -g openclaw-mydazy-mcp
 ```
+
+> 注意：全局安装必须用 `-g` 卸载。不带 `-g` 只会在当前目录查找。
 
 ---
 

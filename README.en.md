@@ -120,11 +120,13 @@ Only 2 fields are required — everything else has sensible defaults:
 curl -fsSL https://raw.githubusercontent.com/ahelpercn/mydazy-mcp/main/uninstall.sh | bash
 ```
 
-**npm install:**
+**npm global uninstall:**
 
 ```bash
-npm uninstall openclaw-mydazy-mcp
+npm uninstall -g openclaw-mydazy-mcp
 ```
+
+> Note: Global installs require the `-g` flag to uninstall. Without `-g`, npm only looks in the current directory.
 
 ---
 
