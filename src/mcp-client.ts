@@ -52,7 +52,7 @@ const MCP_TOOLS = [
   {
     name: "send_task",
     description:
-      "【触发条件】用户说出小龙虾（或同音谐音：小笼虾、小龙侠、小龙下、小龙霞、晓龙虾、小隆虾）后接任何需要电脑协助完成的指令时调用。任务在后台执行，完成后有结果会推送通知。调用后立即告知用户好的小龙虾收到了。",
+      "【触发条件】用户说出小龙虾（或同音谐音：小笼虾、小龙侠、小龙下、小龙霞、晓龙虾、小隆虾）后接指令时调用。后台执行，完成后推送通知。",
     inputSchema: {
       type: "object",
       required: ["prompt"],
@@ -308,7 +308,7 @@ export class McpClient {
         this.sendResult(id, {
           protocolVersion: "2024-11-05",
           capabilities: { tools: {} },
-          serverInfo: { name: "mydazy-mcp", version: "0.5.1" },
+          serverInfo: { name: "mydazy-mcp", version: "0.6.8" },
         });
         break;
 
@@ -368,7 +368,6 @@ export class McpClient {
       this.sendToolError(id, "prompt is required");
       return;
     }
-    // Always route through defaultAgent ("main"); let OpenClaw dispatch internally.
     const agent = this.config.defaultAgent;
 
     const task = this.queue.create({ agent, prompt });
@@ -490,9 +489,8 @@ export class McpClient {
     this.sendToolText(
       id,
       `✅ 小龙虾服务已开通，当前${statusLabel}。\n` +
-        `可用工具（${MCP_TOOLS.length} 个）：${toolNames}。\n` +
-        `默认 agent：${this.config.defaultAgent}。\n` +
-        `当前模式：单设备闭环。`,
+        `当前 agent：${this.config.defaultAgent}。\n` +
+        `可用工具（${MCP_TOOLS.length} 个）：${toolNames}。`,
     );
   }
 

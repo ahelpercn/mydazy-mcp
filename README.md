@@ -37,21 +37,20 @@ npm install -g openclaw-mydazy-mcp
 openclaw-mydazy-mcp setup
 ```
 
-按提示填入 3 个参数：
+只需填 2 个地址（Agent 可选，默认 main）：
 
 ```
 🦞 mydazy-mcp 配置向导
 
-Step 1/3 — MCP 地址
-  打开 mydazy 小程序 → 设备页面 → 复制 MCP 地址
-MCP 地址 (wss://...): wss://api.xiaozhi.me/mcp/?token=...
-
-Step 2/3 — Webhook 地址
+Step 1/3 — Webhook 地址
   打开 mydazy 小程序 → Bot 页面 → 复制 Webhook 地址
 Webhook 地址 (https://...): https://www.mydazy.cn/v1/ota/pushtts?token=...
 
+Step 2/3 — MCP 地址
+  打开 mydazy 小程序 → 设备页面 → 复制 MCP 地址
+MCP 地址 (wss://...): wss://api.xiaozhi.me/mcp/?token=...
+
 Step 3/3 — 默认 Agent (可选)
-  执行任务的 OpenClaw Agent ID，默认 "main"
 Agent ID [main]:
 
 ✅ 配置完成！
@@ -59,8 +58,21 @@ Agent ID [main]:
 
 配置完成后重启 Gateway：`openclaw gateway restart`
 
-> 查看配置状态：`openclaw-mydazy-mcp status`
-> 查看运行状态：`openclaw plugins info openclaw-mydazy-mcp`
+### 第三步：验证
+
+```bash
+openclaw-mydazy-mcp status
+```
+
+```
+🦞 mydazy-mcp 插件状态
+
+状态：    已启用
+MCP 地址： wss://api.xiaozhi.me/mcp/?token=...
+Webhook：  https://www.mydazy.cn/v1/ota/pushtts?token=...
+MCP 连接： 正常
+```
+
 > 重新配置：`openclaw-mydazy-mcp setup`
 > 也可以在 **OpenClaw Dashboard** 中配置插件参数。
 
@@ -101,14 +113,24 @@ Agent ID [main]:
 
 ## 配置
 
-填 2 个地址即可使用，Agent 和超时可选配置：
+填 2 个地址即可使用，其余可选：
 
 | 字段 | 必填 | 默认值 | 说明 |
 |------|------|--------|------|
-| `mcpServerUrl` | ✅ | — | 小程序「设备」页面获取 |
-| `webhookUrl` | ✅ | — | 小程序「Bot」页面获取 |
+| `webhookUrl` | Yes | — | 小程序「Bot」页面获取 |
+| `mcpServerUrl` | Yes | — | 小程序「设备」页面获取 |
 | `defaultAgent` | | `"main"` | 执行任务的 OpenClaw Agent ID |
 | `taskTimeoutMs` | | `120000` | 任务超时时间（毫秒） |
+
+---
+
+## CLI 命令
+
+| 命令 | 说明 |
+|------|------|
+| `openclaw-mydazy-mcp` | 自动检测：未配置→启动向导，已配置→显示状态 |
+| `openclaw-mydazy-mcp setup` | 运行配置向导 |
+| `openclaw-mydazy-mcp status` | 查看配置和 MCP 连接状态 |
 
 ---
 
@@ -132,9 +154,9 @@ npm uninstall -g openclaw-mydazy-mcp
 
 ## 常见问题
 
-**插件加载失败？** — 运行 `openclaw plugins info openclaw-mydazy-mcp` 查看错误详情。常见原因是插件 ID 不匹配，升级到最新版本即可。
+**MCP 连接显示"超时"或"连接失败"？** — 检查 `mcpServerUrl` 的 token 是否过期，在小程序设备页面重新获取。
 
-**设备没有收到播报？** — 检查 `webhookUrl` 是否正确，在小程序 Bot 页面重新复制。运行 `openclaw plugins info openclaw-mydazy-mcp` 确认插件 Status 为 `loaded`。
+**设备没有收到播报？** — 检查 `webhookUrl` 是否正确，在小程序 Bot 页面重新复制。
 
 **任务超时？** — 默认 120 秒，复杂任务可调大 `taskTimeoutMs`。
 

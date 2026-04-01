@@ -58,7 +58,17 @@ function isConfigured(cfg) {
 // Status
 // ---------------------------------------------------------------------------
 
-function showStatus(data) {
+async function checkMcpConnection(url) {
+  const { WebSocket } = await import("ws");
+  return new Promise((resolve) => {
+    const timeout = setTimeout(() => { ws.close(); resolve("超时"); }, 5000);
+    const ws = new WebSocket(url);
+    ws.on("open", () => { clearTimeout(timeout); ws.close(); resolve("正常"); });
+    ws.on("error", (e) => { clearTimeout(timeout); resolve(e.message || "连接失败"); });
+  });
+}
+
+async function showStatus(data) {
   const cfg = getPluginConfig(data);
   const entry = data?.plugins?.entries?.[PLUGIN_ID];
 
@@ -80,9 +90,15 @@ function showStatus(data) {
   console.log(`${BOLD}状态：${RESET}    ${enabled}`);
   console.log(`${BOLD}MCP 地址：${RESET} ${DIM}${mcpUrl}${RESET}`);
   console.log(`${BOLD}Webhook：${RESET}  ${DIM}${webhookUrl}${RESET}`);
-  if (cfg.triggerWord) {
-    console.log(`${BOLD}触发词：${RESET}  ${cfg.triggerWord}`);
-  }
+
+  // MCP 连接检测
+  process.stdout.write(`${BOLD}MCP 连接：${RESET} 检测中...`);
+  const connStatus = await checkMcpConnection(cfg.mcpServerUrl);
+  const connLabel = connStatus === "正常"
+    ? `${GREEN}${connStatus}${RESET}`
+    : `${RED}${connStatus}${RESET}`;
+  process.stdout.write(`\r${BOLD}MCP 连接：${RESET} ${connLabel}      \n`);
+
   console.log(`\n${DIM}重新配置：openclaw-mydazy-mcp setup${RESET}`);
   console.log(`${DIM}配置文件：${CONFIG_FILE}${RESET}\n`);
 }
@@ -100,22 +116,22 @@ ${DIM}连接 MyDazy 设备到 OpenClaw Agent${RESET}
   const rl = createInterface({ input: stdin, output: stdout });
 
   try {
-    // Step 1: MCP Server URL
-    console.log(`${CYAN}Step 1/3${RESET} — MCP 地址`);
-    console.log(`${DIM}打开 mydazy 小程序 → 设备页面 → 复制 MCP 地址${RESET}`);
-    const mcpServerUrl = await askRequired(rl, "MCP 地址 (wss://...): ", (v) =>
-      v.startsWith("wss://") || v.startsWith("ws://")
-        ? null
-        : "请输入有效的 WebSocket 地址 (wss://...)",
-    );
-
-    // Step 2: Webhook URL
-    console.log(`\n${CYAN}Step 2/3${RESET} — Webhook 地址`);
+    // Step 1: Webhook URL
+    console.log(`${CYAN}Step 1/3${RESET} — Webhook 地址`);
     console.log(`${DIM}打开 mydazy 小程序 → Bot 页面 → 复制 Webhook 地址${RESET}`);
     const webhookUrl = await askRequired(rl, "Webhook 地址 (https://...): ", (v) =>
       v.startsWith("https://") || v.startsWith("http://")
         ? null
         : "请输入有效的 HTTP 地址 (https://...)",
+    );
+
+    // Step 2: MCP Server URL
+    console.log(`\n${CYAN}Step 2/3${RESET} — MCP 地址`);
+    console.log(`${DIM}打开 mydazy 小程序 → 设备页面 → 复制 MCP 地址${RESET}`);
+    const mcpServerUrl = await askRequired(rl, "MCP 地址 (wss://...): ", (v) =>
+      v.startsWith("wss://") || v.startsWith("ws://")
+        ? null
+        : "请输入有效的 WebSocket 地址 (wss://...)",
     );
 
     // Step 3: Default Agent (optional)
@@ -206,11 +222,11 @@ const data = await loadConfig();
 if (cmd === "setup") {
   await runSetup();
 } else if (cmd === "status") {
-  showStatus(data);
+  await showStatus(data);
 } else {
   // Auto-detect: no config → setup, has config → status
   if (isConfigured(getPluginConfig(data))) {
-    showStatus(data);
+    await showStatus(data);
   } else {
     console.log(`${YELLOW}${BOLD}检测到插件尚未配置，启动配置向导...${RESET}\n`);
     await runSetup();

@@ -37,21 +37,20 @@ npm install -g openclaw-mydazy-mcp
 openclaw-mydazy-mcp setup
 ```
 
-Fill in 3 parameters when prompted:
+Only 2 fields required (Agent is optional, defaults to "main"):
 
 ```
 🦞 mydazy-mcp Setup Wizard
 
-Step 1/3 — MCP URL
-  Open mydazy mini-program → Devices page → Copy MCP URL
-MCP URL (wss://...): wss://api.xiaozhi.me/mcp/?token=...
-
-Step 2/3 — Webhook URL
+Step 1/3 — Webhook URL
   Open mydazy mini-program → Bot page → Copy Webhook URL
 Webhook URL (https://...): https://www.mydazy.cn/v1/ota/pushtts?token=...
 
+Step 2/3 — MCP URL
+  Open mydazy mini-program → Devices page → Copy MCP URL
+MCP URL (wss://...): wss://api.xiaozhi.me/mcp/?token=...
+
 Step 3/3 — Default Agent (optional)
-  OpenClaw Agent ID for task execution, defaults to "main"
 Agent ID [main]:
 
 ✅ Setup complete!
@@ -59,8 +58,21 @@ Agent ID [main]:
 
 After setup, restart Gateway: `openclaw gateway restart`
 
-> Check config status: `openclaw-mydazy-mcp status`
-> Check runtime status: `openclaw plugins info openclaw-mydazy-mcp`
+### Step 3: Verify
+
+```bash
+openclaw-mydazy-mcp status
+```
+
+```
+🦞 mydazy-mcp Plugin Status
+
+Status:     Enabled
+MCP URL:    wss://api.xiaozhi.me/mcp/?token=...
+Webhook:    https://www.mydazy.cn/v1/ota/pushtts?token=...
+MCP Conn:   OK
+```
+
 > Reconfigure: `openclaw-mydazy-mcp setup`
 > You can also configure the plugin in the **OpenClaw Dashboard**.
 
@@ -101,14 +113,24 @@ Voice readback ← MyDazy device ← Webhook push ← Oral summary ← Task comp
 
 ## Configuration
 
-Only 2 fields are required — everything else has sensible defaults:
+Only 2 fields required — everything else has sensible defaults:
 
 | Field | Required | Default | Description |
 |-------|----------|---------|-------------|
-| `mcpServerUrl` | Yes | — | From mydazy mini-program → Devices page |
 | `webhookUrl` | Yes | — | From mydazy mini-program → Bot page |
+| `mcpServerUrl` | Yes | — | From mydazy mini-program → Devices page |
 | `defaultAgent` | | `"main"` | OpenClaw Agent ID for task execution |
 | `taskTimeoutMs` | | `120000` | Task timeout in milliseconds |
+
+---
+
+## CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `openclaw-mydazy-mcp` | Auto-detect: unconfigured → setup wizard, configured → show status |
+| `openclaw-mydazy-mcp setup` | Run the setup wizard |
+| `openclaw-mydazy-mcp status` | Show config and MCP connection status |
 
 ---
 
@@ -131,6 +153,8 @@ npm uninstall -g openclaw-mydazy-mcp
 ---
 
 ## FAQ
+
+**MCP connection shows "timeout" or "failed"?** — Check if the `mcpServerUrl` token has expired. Get a fresh one from the Devices page in the mydazy mini-program.
 
 **Device not receiving voice alerts?** — Check that `webhookUrl` is correct. Re-copy it from the Bot page in the mydazy mini-program.
 
