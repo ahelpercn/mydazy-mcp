@@ -308,7 +308,7 @@ export class McpClient {
         this.sendResult(id, {
           protocolVersion: "2024-11-05",
           capabilities: { tools: {} },
-          serverInfo: { name: "mydazy-mcp", version: "0.6.9" },
+          serverInfo: { name: "mydazy-mcp", version: "0.7.0" },
         });
         break;
 

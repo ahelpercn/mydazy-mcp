@@ -119,7 +119,11 @@ async function showStatus(data) {
       );
       if (resp.ok) {
         const { version: latest } = await resp.json();
-        if (latest && latest !== localVer) {
+        const toN = (v) => v.split(".").map(Number);
+        const [a, b, c] = toN(localVer);
+        const [x, y, z] = toN(latest);
+        const needsUpdate = x > a || (x === a && y > b) || (x === a && y === b && z > c);
+        if (latest && needsUpdate) {
           console.log(
             `\n${YELLOW}${BOLD}⬆ 新版本 v${latest} 可用${RESET}（当前 v${localVer}）`,
           );
@@ -243,22 +247,155 @@ async function askRequired(rl, prompt, validate) {
 }
 
 // ---------------------------------------------------------------------------
+// Version
+// ---------------------------------------------------------------------------
+
+async function getLocalVersion() {
+  try {
+    const { realpathSync } = await import("node:fs");
+    const realScript = realpathSync(fileURLToPath(import.meta.url));
+    const raw = await readFile(join(dirname(realScript), "..", "package.json"), "utf-8");
+    return JSON.parse(raw).version;
+  } catch { return "unknown"; }
+}
+
+async function showVersion() {
+  const ver = await getLocalVersion();
+  console.log(`${PLUGIN_ID} v${ver}`);
+}
+
+// ---------------------------------------------------------------------------
+// Upgrade
+// ---------------------------------------------------------------------------
+
+async function runUpgrade() {
+  const localVer = await getLocalVersion();
+  console.log(`\n${GREEN}${BOLD}🦞 mydazy-mcp 升级检查${RESET}\n`);
+  console.log(`${BOLD}当前版本：${RESET} v${localVer}`);
+
+  process.stdout.write(`${BOLD}最新版本：${RESET} 查询中...`);
+  let latest;
+  try {
+    const resp = await fetch(
+      `https://registry.npmjs.org/${PLUGIN_ID}/latest`,
+      { signal: AbortSignal.timeout(5000) },
+    );
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    latest = (await resp.json()).version;
+  } catch (e) {
+    process.stdout.write(`\r${BOLD}最新版本：${RESET} ${RED}查询失败 (${e.message})${RESET}\n`);
+    return;
+  }
+  process.stdout.write(`\r${BOLD}最新版本：${RESET} v${latest}      \n`);
+
+  // Compare semver: skip if local >= latest
+  const toNum = (v) => v.split(".").map(Number);
+  const [lMaj, lMin, lPat] = toNum(localVer);
+  const [rMaj, rMin, rPat] = toNum(latest);
+  const localNewer = lMaj > rMaj || (lMaj === rMaj && lMin > rMin) ||
+    (lMaj === rMaj && lMin === rMin && lPat >= rPat);
+  if (localNewer) {
+    console.log(`\n${GREEN}✅ 已是最新版本${RESET}\n`);
+    return;
+  }
+
+  console.log(`\n${YELLOW}${BOLD}⬆ 正在升级到 v${latest}...${RESET}\n`);
+  const { execSync } = await import("node:child_process");
+  try {
+    execSync(`npm install -g ${PLUGIN_ID}@latest`, { stdio: "inherit" });
+    console.log(`\n${GREEN}${BOLD}✅ 升级完成！${RESET} v${localVer} → v${latest}`);
+    console.log(`${DIM}重启 Gateway 使新版生效：openclaw gateway restart${RESET}\n`);
+  } catch {
+    console.error(`\n${RED}❌ 升级失败，请手动执行：${RESET}`);
+    console.error(`  ${CYAN}npm install -g ${PLUGIN_ID}@latest${RESET}\n`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Uninstall
+// ---------------------------------------------------------------------------
+
+async function runUninstall() {
+  console.log(`\n${GREEN}${BOLD}🦞 mydazy-mcp 卸载${RESET}\n`);
+
+  const rl = createInterface({ input: stdin, output: stdout });
+  const answer = await rl.question(`${YELLOW}确认卸载？配置文件会保留。(y/N): ${RESET}`);
+  rl.close();
+
+  if (answer.trim().toLowerCase() !== "y") {
+    console.log(`${DIM}已取消${RESET}\n`);
+    return;
+  }
+
+  const { execSync } = await import("node:child_process");
+  try {
+    execSync(`npm uninstall -g ${PLUGIN_ID}`, { stdio: "inherit" });
+    console.log(`\n${GREEN}✅ 已卸载${RESET}`);
+    console.log(`${DIM}配置保留在：${CONFIG_FILE}${RESET}`);
+    console.log(`${DIM}重新安装：npm install -g ${PLUGIN_ID}${RESET}\n`);
+  } catch {
+    console.error(`\n${RED}❌ 卸载失败，请手动执行：${RESET}`);
+    console.error(`  ${CYAN}npm uninstall -g ${PLUGIN_ID}${RESET}\n`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Help
+// ---------------------------------------------------------------------------
+
+function showHelp() {
+  console.log(`
+${GREEN}${BOLD}🦞 mydazy-mcp${RESET} — MyDazy 设备 OpenClaw 插件
+
+${BOLD}用法：${RESET}
+  openclaw-mydazy-mcp                 自动检测：未配置→配置向导，已配置→状态
+  openclaw-mydazy-mcp ${CYAN}setup${RESET}           运行配置向导
+  openclaw-mydazy-mcp ${CYAN}status${RESET}          查看状态和连接检测
+  openclaw-mydazy-mcp ${CYAN}upgrade${RESET}         检查并升级到最新版本
+  openclaw-mydazy-mcp ${CYAN}uninstall${RESET}       卸载插件
+  openclaw-mydazy-mcp ${CYAN}version${RESET}         显示版本号
+  openclaw-mydazy-mcp ${CYAN}help${RESET}            显示此帮助
+`);
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
 const cmd = process.argv[2];
 const data = await loadConfig();
 
-if (cmd === "setup") {
-  await runSetup();
-} else if (cmd === "status") {
-  await showStatus(data);
-} else {
-  // Auto-detect: no config → setup, has config → status
-  if (isConfigured(getPluginConfig(data))) {
-    await showStatus(data);
-  } else {
-    console.log(`${YELLOW}${BOLD}检测到插件尚未配置，启动配置向导...${RESET}\n`);
+switch (cmd) {
+  case "setup":
     await runSetup();
-  }
+    break;
+  case "status":
+    await showStatus(data);
+    break;
+  case "upgrade":
+  case "update":
+    await runUpgrade();
+    break;
+  case "uninstall":
+  case "remove":
+    await runUninstall();
+    break;
+  case "version":
+  case "-v":
+  case "--version":
+    await showVersion();
+    break;
+  case "help":
+  case "-h":
+  case "--help":
+    showHelp();
+    break;
+  default:
+    // Auto-detect: no config → setup, has config → status
+    if (isConfigured(getPluginConfig(data))) {
+      await showStatus(data);
+    } else {
+      console.log(`${YELLOW}${BOLD}检测到插件尚未配置，启动配置向导...${RESET}\n`);
+      await runSetup();
+    }
 }
