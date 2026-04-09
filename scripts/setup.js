@@ -19,8 +19,9 @@
 import { createInterface } from "node:readline/promises";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { stdin, stdout } from "node:process";
+import { fileURLToPath } from "node:url";
 
 const RESET = "\x1b[0m";
 const GREEN = "\x1b[32m";
@@ -72,7 +73,16 @@ async function showStatus(data) {
   const cfg = getPluginConfig(data);
   const entry = data?.plugins?.entries?.[PLUGIN_ID];
 
-  console.log(`\n${GREEN}${BOLD}🦞 mydazy-mcp 插件状态${RESET}\n`);
+  // Read version from package.json (resolve symlinks to find the real location)
+  let version = "";
+  try {
+    const { realpathSync } = await import("node:fs");
+    const realScript = realpathSync(fileURLToPath(import.meta.url));
+    const raw = await readFile(join(dirname(realScript), "..", "package.json"), "utf-8");
+    version = ` v${JSON.parse(raw).version}`;
+  } catch (e) { console.error("version read error:", e.message); }
+
+  console.log(`\n${GREEN}${BOLD}🦞 mydazy-mcp${version}${RESET}\n`);
 
   if (!cfg || !isConfigured(cfg)) {
     console.log(`${RED}${BOLD}未配置${RESET} — 请运行 ${CYAN}openclaw-mydazy-mcp setup${RESET} 完成配置\n`);
