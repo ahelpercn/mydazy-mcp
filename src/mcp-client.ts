@@ -52,7 +52,7 @@ const MCP_TOOLS = [
   {
     name: "send_task",
     description:
-      "【触发条件】用户说出小龙虾（或同音谐音：小笼虾、小龙侠、小龙下、小龙霞、晓龙虾、小隆虾）后接指令时调用。后台执行，完成后推送通知。",
+      "【触发条件】用户说出小龙虾（或同音谐音：小笼虾、小龙侠、小龙下、小龙霞、晓龙虾、小隆虾）后接指令时调用。后台执行，完成后推送通知。【能力范围】搜索信息、浏览网页（京东/淘宝/抖音等）、控制电脑桌面应用（微信/Safari/Finder等）、发飞书消息/文档、分析数据、写文案、翻译、竞品调研、读写笔记、管理日历和提醒。",
     inputSchema: {
       type: "object",
       required: ["prompt"],
@@ -308,7 +308,7 @@ export class McpClient {
         this.sendResult(id, {
           protocolVersion: "2024-11-05",
           capabilities: { tools: {} },
-          serverInfo: { name: "mydazy-mcp", version: "0.6.8" },
+          serverInfo: { name: "mydazy-mcp", version: "0.6.9" },
         });
         break;
 

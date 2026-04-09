@@ -15,6 +15,7 @@
 
 import { exec } from "node:child_process";
 import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { promisify } from "node:util";
 import { buildOralSummary, isInlineable } from "./result-narrator";
 import type { TaskQueue } from "./task-queue";
@@ -39,8 +40,19 @@ export type RunTaskOptions = {
   logger: Logger;
 };
 
-/** Safely shell-escape a single argument by wrapping in single quotes */
+const isWin = process.platform === "win32";
+
+/** Safely shell-escape a single argument (platform-aware) */
 function shellEscape(str: string): string {
+  if (isWin) {
+    // Windows cmd: double-quote wrapping, escape internal quotes and special chars
+    const escaped = str
+      .replace(/"/g, '\\"')
+      .replace(/%/g, "%%")     // % is variable expansion in cmd
+      .replace(/!/g, "^^!");   // ! is expansion in delayed mode
+    return '"' + escaped + '"';
+  }
+  // Unix: single-quote wrapping
   return "'" + str.replace(/'/g, "'\\''") + "'";
 }
 
@@ -54,17 +66,39 @@ function buildTaskSessionId(taskId: string): string {
  */
 function resolveOpenClawBin(): string {
   if (process.env.OPENCLAW_BIN?.trim()) return process.env.OPENCLAW_BIN.trim();
-  // Common global install paths (npm / Homebrew / pnpm)
-  const candidates = [
-    "/opt/homebrew/bin/openclaw",
-    "/usr/local/bin/openclaw",
-    `${process.env.HOME}/.npm-global/bin/openclaw`,
-    `${process.env.HOME}/Library/pnpm/openclaw`,
+
+  const home = process.env.HOME || process.env.USERPROFILE || "";
+  const binName = isWin ? "openclaw.cmd" : "openclaw";
+
+  // Derive from the same node that runs the gateway
+  const nodeBinDir = process.execPath ? dirname(process.execPath) : "";
+  const candidates: string[] = [
+    nodeBinDir ? join(nodeBinDir, binName) : "",
   ];
-  for (const candidate of candidates) {
+
+  if (isWin) {
+    // Windows common paths (npm global uses .cmd, official installer uses .exe)
+    candidates.push(
+      join(home, "AppData", "Roaming", "npm", binName),
+      join(home, "AppData", "Local", "pnpm", binName),
+      join(home, ".local", "bin", "openclaw.exe"),
+      join(home, ".local", "bin", "openclaw.cmd"),
+    );
+  } else {
+    // macOS / Linux common paths
+    candidates.push(
+      "/opt/homebrew/bin/openclaw",
+      "/usr/local/bin/openclaw",
+      join(home, ".npm-global", "bin", "openclaw"),
+      join(home, "Library", "pnpm", "openclaw"),
+      join(home, ".local", "bin", "openclaw"),
+    );
+  }
+
+  for (const candidate of candidates.filter(Boolean)) {
     if (existsSync(candidate)) return candidate;
   }
-  return "openclaw";
+  return isWin ? "openclaw.cmd" : "openclaw";
 }
 
 // ---------------------------------------------------------------------------
@@ -135,10 +169,19 @@ export async function runTask(opts: RunTaskOptions): Promise<void> {
     logger.info(`[mydazy-mcp] running: openclaw agent --agent ${agent}`);
     queue.appendProgress(taskId, `调用 agent: ${agent} (session=${sessionId})`);
 
+    // Ensure the child process can find node (critical for LaunchAgent/daemon
+    // environments where nvm/nvm-windows is not in PATH).
+    const nodeBinDir = process.execPath ? dirname(process.execPath) : "";
+    const childEnv = { ...process.env };
+    const pathSep = isWin ? ";" : ":";
+    if (nodeBinDir && !childEnv.PATH?.includes(nodeBinDir)) {
+      childEnv.PATH = `${nodeBinDir}${pathSep}${childEnv.PATH ?? ""}`;
+    }
+
     const { stdout, stderr } = await execAsync(cmd, {
       timeout: timeoutMs,
       maxBuffer: 10 * 1024 * 1024, // 10 MB
-      env: { ...process.env },
+      env: childEnv,
     });
 
     if (stderr?.trim()) {
