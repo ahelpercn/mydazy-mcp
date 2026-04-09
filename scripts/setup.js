@@ -109,6 +109,26 @@ async function showStatus(data) {
     : `${RED}${connStatus}${RESET}`;
   process.stdout.write(`\r${BOLD}MCP 连接：${RESET} ${connLabel}      \n`);
 
+  // Check for updates (non-blocking, 3s timeout)
+  const localVer = version.trim().replace(/^v/, "");
+  if (localVer) {
+    try {
+      const resp = await fetch(
+        `https://registry.npmjs.org/${PLUGIN_ID}/latest`,
+        { signal: AbortSignal.timeout(3000) },
+      );
+      if (resp.ok) {
+        const { version: latest } = await resp.json();
+        if (latest && latest !== localVer) {
+          console.log(
+            `\n${YELLOW}${BOLD}⬆ 新版本 v${latest} 可用${RESET}（当前 v${localVer}）`,
+          );
+          console.log(`  ${CYAN}npm install -g ${PLUGIN_ID}@latest${RESET}`);
+        }
+      }
+    } catch { /* network error — skip silently */ }
+  }
+
   console.log(`\n${DIM}重新配置：openclaw-mydazy-mcp setup${RESET}`);
   console.log(`${DIM}配置文件：${CONFIG_FILE}${RESET}\n`);
 }
