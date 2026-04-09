@@ -343,18 +343,36 @@ async function runUninstall() {
 // Help
 // ---------------------------------------------------------------------------
 
-function showHelp() {
+async function showHelp() {
+  const ver = await getLocalVersion();
   console.log(`
-${GREEN}${BOLD}🦞 mydazy-mcp${RESET} — MyDazy 设备 OpenClaw 插件
+${GREEN}${BOLD}🦞 mydazy-mcp${ver !== "unknown" ? ` v${ver}` : ""}${RESET}
+${DIM}连接 MyDazy AI 语音设备到 OpenClaw Agent${RESET}
+${DIM}GitHub: https://github.com/ahelpercn/mydazy-mcp${RESET}
 
-${BOLD}用法：${RESET}
-  openclaw-mydazy-mcp                 自动检测：未配置→配置向导，已配置→状态
-  openclaw-mydazy-mcp ${CYAN}setup${RESET}           运行配置向导
-  openclaw-mydazy-mcp ${CYAN}status${RESET}          查看状态和连接检测
+${BOLD}命令：${RESET}
+  openclaw-mydazy-mcp ${CYAN}setup${RESET}           配置向导（MCP地址 + Webhook）
+  openclaw-mydazy-mcp ${CYAN}status${RESET}          查看状态、连接检测、版本检查
   openclaw-mydazy-mcp ${CYAN}upgrade${RESET}         检查并升级到最新版本
-  openclaw-mydazy-mcp ${CYAN}uninstall${RESET}       卸载插件
+  openclaw-mydazy-mcp ${CYAN}uninstall${RESET}       卸载插件（保留配置）
   openclaw-mydazy-mcp ${CYAN}version${RESET}         显示版本号
   openclaw-mydazy-mcp ${CYAN}help${RESET}            显示此帮助
+
+${BOLD}快速开始：${RESET}
+  ${DIM}# 1. 安装${RESET}
+  npm install -g openclaw-mydazy-mcp
+
+  ${DIM}# 2. 配置（需要 MCP 地址和 Webhook 地址）${RESET}
+  openclaw-mydazy-mcp setup
+
+  ${DIM}# 3. 重启 Gateway 生效${RESET}
+  openclaw gateway restart
+
+  ${DIM}# 4. 验证${RESET}
+  openclaw-mydazy-mcp status
+
+${BOLD}卸载：${RESET}
+  npm uninstall -g openclaw-mydazy-mcp
 `);
 }
 
@@ -391,11 +409,20 @@ switch (cmd) {
     showHelp();
     break;
   default:
-    // Auto-detect: no config → setup, has config → status
+    if (cmd) {
+      console.log(`${RED}未知命令: ${cmd}${RESET}\n`);
+    }
+    await showHelp();
+    // Show quick status if configured
     if (isConfigured(getPluginConfig(data))) {
-      await showStatus(data);
+      const ver = await getLocalVersion();
+      const cfg = getPluginConfig(data);
+      const connStatus = await checkMcpConnection(cfg.mcpServerUrl);
+      const connLabel = connStatus === "正常" ? `${GREEN}正常${RESET}` : `${RED}${connStatus}${RESET}`;
+      console.log(`${DIM}─── 当前状态 ───${RESET}`);
+      console.log(`  版本 v${ver}  |  MCP ${connLabel}  |  ${GREEN}已配置${RESET}`);
+      console.log("");
     } else {
-      console.log(`${YELLOW}${BOLD}检测到插件尚未配置，启动配置向导...${RESET}\n`);
-      await runSetup();
+      console.log(`${YELLOW}提示：运行 ${CYAN}openclaw-mydazy-mcp setup${YELLOW} 开始配置${RESET}\n`);
     }
 }
